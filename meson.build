@@ -4,6 +4,7 @@ project('Jävel', 'c',
 
 inc = include_directories('include')
 
-subdir ('include')
-subdir ('lib')
-subdir ('src')
+subdir('include')
+subdir('lib')
+subdir('src')
+subdir('tests')
