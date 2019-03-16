@@ -15,6 +15,12 @@ int is_dir(const char *dir) {
     return stat(dir, &sb) == 0 && S_ISDIR(sb.st_mode);
 }
 
+int is_file(const char *file) {
+    struct stat sb;
+
+    return stat(file, &sb) == 0 && S_ISREG(sb.st_mode);
+}
+
 int num_entries_in_dir(const char *dir) {
     int entry_count = -2; // Don't count . and ..
     DIR * dirp;

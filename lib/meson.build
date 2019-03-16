@@ -1,10 +1,14 @@
 lib_src = [
-    'libjavel.c',
     'config.c',
     'init.c',
-    'util.c'
+    'libjavel.c',
+    'object.c',
+    'util.c',
+    'cat-file.c',
 ]
+
 libjavel = shared_library('javel',
                           lib_src,
                           include_directories: inc,
+                          dependencies: zlib_dep,
                           install: true)

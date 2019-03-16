@@ -1,6 +1,6 @@
+#include "test.h"
 #include "util.h"
 
-#include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,29 +8,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-typedef int (*setup_fun)(void);
-typedef int (*teardown_fun)(void);
-
-#define TEST(f,s,t,fx) {                \
-    int test_result = 0;                \
-    printf("Executing " #f "... ");     \
-    assert(s((fx)) == 0);               \
-    test_result = f(fx);                \
-    assert(t((fx)) == 0);               \
-    if (test_result == 0) {             \
-        printf("OK!\n");                \
-    } else {                            \
-        printf("FAIL!\n");              \
-    }                                   \
-    assert(test_result == 0);           \
-}
-
-#define TEST_DEFAULT(f,fx) {                        \
-    TEST(f, default_setup, default_teardown, fx);   \
-}
-
-#define ASSERT(x) {if (!(x)) return 1;}
 
 struct fixture {
     char rm_command[2048];
@@ -84,13 +61,6 @@ int main(int argc, char **argv) {
 
     struct fixture fx = { 0 };
 
-    TEST(test_finds_existing_git_path,
-         default_setup,
-         default_teardown,
-         &fx);
-
-    TEST(test_fails_finding_nonexisting_git_path,
-         default_setup,
-         default_teardown,
-         &fx);
+    TEST_DEFAULT(test_finds_existing_git_path, &fx);
+    TEST_DEFAULT(test_fails_finding_nonexisting_git_path, &fx);
 }

@@ -1,4 +1,6 @@
+#include "cat-file.h"
 #include "init.h"
+#include "log.h"
 
 #include <argp.h>
 #include <string.h>
@@ -8,6 +10,8 @@ static char doc[] =
 "Commands:\n"
 "init\n"
 "  - Initialize a new git directory\n"
+"cat-file HASH\n"
+"  - Cat the contents of HASH to stdout\n"
 "\n"
 "Options:";
 
@@ -57,7 +61,15 @@ int main(int argc, char **argv) {
         if (!arguments.args[1]) {
             arguments.args[1] = ".";
         }
+
         return jvl_init(arguments.args[1]);
+    } else if (IS_ARG(arguments.args[0], "cat-file")) {
+        if (!arguments.args[1]) {
+            ERROR("Second argument must be a valid commit hash");
+            return -1;
+        }
+
+        return jvl_cat_file(arguments.args[1]);
     } else {
         fprintf(stderr, "Unknown argument '%s'\n", arguments.args[0]);
     }
