@@ -20,8 +20,16 @@ struct object {
     ssize_t size;
 };
 
-int object_open(struct object *obj, const char *git_dir, const char *hash);
+int object_open(struct object *obj,
+                const char *git_dir,
+                const char *hash,
+                int create);
+
 int object_close(struct object *obj);
 
 ssize_t object_read(struct object *obj, uint8_t *buf, size_t count);
-ssize_t object_write(struct object *obj, const uint8_t *buf, size_t count);
+
+char *object_write(struct object *obj,
+                   enum object_type type,
+                   const char *file,
+                   int write_to_db);

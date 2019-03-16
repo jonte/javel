@@ -13,6 +13,7 @@ object_test = executable('object_test',
                          [
                              'object_test.c',
                              '../lib/object.c',
+                             '../lib/sha1.c',
                              '../lib/util.c',
                          ],
                          include_directories: [inc, lib_include_dirs],

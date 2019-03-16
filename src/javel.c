@@ -12,6 +12,8 @@ static char doc[] =
 "  - Initialize a new git directory\n"
 "cat-file HASH\n"
 "  - Cat the contents of HASH to stdout\n"
+"hash-file FILE\n"
+"  - Hash a file, and store the resulting object\n"
 "\n"
 "Options:";
 
@@ -70,6 +72,13 @@ int main(int argc, char **argv) {
         }
 
         return jvl_cat_file(arguments.args[1]);
+    } else if (IS_ARG(arguments.args[0], "hash-file")) {
+        if (!arguments.args[1]) {
+            ERROR("Second argument must be a valid file name");
+            return -1;
+        }
+
+        return jvl_hash_file(arguments.args[1]);
     } else {
         fprintf(stderr, "Unknown argument '%s'\n", arguments.args[0]);
     }

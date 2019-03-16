@@ -16,7 +16,7 @@ int jvl_cat_file(const char *hash) {
         return -1;
     }
 
-    if (object_open(&obj, git_dir, hash)) {
+    if (object_open(&obj, git_dir, hash, 0)) {
         return -1;
     }
 

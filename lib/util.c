@@ -1,6 +1,7 @@
 #include "log.h"
 
 #include <dirent.h>
+#include <errno.h>
 #include <error.h>
 #include <limits.h>
 #include <stddef.h>
@@ -19,6 +20,17 @@ int is_file(const char *file) {
     struct stat sb;
 
     return stat(file, &sb) == 0 && S_ISREG(sb.st_mode);
+}
+
+int file_size(const char *file) {
+    struct stat sb;
+
+    if (stat(file, &sb)) {
+        ERROR("Unable to stat %s: %s", file, strerror(errno));
+        return -1;
+    }
+
+    return sb.st_size;
 }
 
 int num_entries_in_dir(const char *dir) {
