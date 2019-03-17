@@ -59,7 +59,10 @@ int main(int argc, char **argv) {
     (void) argc;
     (void) argv;
 
-    struct fixture fx = { 0 };
+    struct fixture fx = {
+        { 0 },
+        { 0 }
+    };
 
     TEST_DEFAULT(test_finds_existing_git_path, &fx);
     TEST_DEFAULT(test_fails_finding_nonexisting_git_path, &fx);

@@ -15,11 +15,14 @@ int jvl_log(const char *hash) {
     char *git_dir = find_git_dir(".");
     if (!git_dir) {
         ERROR("Not a git repository");
+        free(next_hash);
         return -1;
     }
 
     while (next_hash) {
         if (commit_object_open(&obj, git_dir, next_hash)) {
+            free(git_dir);
+            free(next_hash);
             return -1;
         }
 

@@ -34,7 +34,7 @@ static char args_doc[] = "COMMAND [COMMAND...]";
 
 struct arguments
 {
-    char *args[2];
+    char *args[3];
 };
 
 static error_t

@@ -75,9 +75,9 @@ static int iterate_objects(struct tree_object *tree_obj,
 
                 tree_object_open(&inner_tree_obj, git_dir, leaf->hash);
 
-                strcat(path, dir);
-                strcat(path, "/");
-                strcat(path, leaf->path);
+                strncat(path, dir, PATH_MAX);
+                strncat(path, "/", PATH_MAX - 1);
+                strncat(path, leaf->path, PATH_MAX);
                 if (iterate_objects(&inner_tree_obj, git_dir, path)) {
                     ERROR("Failed to iterate tree");
                     return -1;

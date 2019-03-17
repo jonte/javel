@@ -31,7 +31,7 @@ static int default_setup(struct fixture *fx) {
 
     mkdtemp(tmpfile);
     strncpy(fx->write_file, tmpfile, PATH_MAX);
-    strcat(fx->write_file, "/file");
+    strncat(fx->write_file, "/file", PATH_MAX);
 
     fd = open(fx->write_file, O_WRONLY | O_CREAT, default_mode);
     assert(write(fd, dummy_text, sizeof(dummy_text)) == sizeof(dummy_text));

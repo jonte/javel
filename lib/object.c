@@ -102,8 +102,8 @@ int object_open(struct object *obj,
     snprintf(objects_dir, PATH_MAX, "%s/objects/%c%c/", git_dir, hash[0],
              hash[1]);
 
-    strcat(path, objects_dir);
-    strcat(path, hash+2);
+    strncat(path, objects_dir, PATH_MAX);
+    strncat(path, hash+2, PATH_MAX);
 
     if (!is_file(path) && !create) {
         ERROR("Object does not exist: %s", path);
@@ -157,11 +157,12 @@ static ssize_t read_compressed_chunk(z_stream *strm, uint8_t *buf,
         assert(ret != Z_STREAM_ERROR);
         switch (ret) {
             case Z_NEED_DICT:
-                ret = Z_DATA_ERROR;     /* and fall through */
-                __attribute__ ((fallthrough));
+                ERROR("Decompressing object failed");
+                return -1;
             case Z_DATA_ERROR:
-                __attribute__ ((fallthrough));
-            case Z_MEM_ERROR:
+                ERROR("Decompressing object failed");
+                return -1;
+            case Z_MEM_ERROR :
                 ERROR("Decompressing object failed");
                 return -1;
         }
@@ -265,9 +266,12 @@ char *object_write(struct object *obj,
     buffer_out = malloc(buffer_out_sz);
     if (!buffer_in || !buffer_out) {
         ERROR("Failed to allocate memory for object compression");
+        free(buffer_in);
+        free(buffer_out);
+        return NULL;
     }
 
-    strcpy((char*)buffer_in, header);
+    strncpy((char*)buffer_in, header, header_sz);
 
     assert(read(fd, buffer_in + header_sz + 1, buffer_in_sz - header_sz) ==
            buffer_in_sz - header_sz);
