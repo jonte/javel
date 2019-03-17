@@ -3,7 +3,7 @@ lib_include_dirs = include_directories('../lib/')
 util_test = executable('util_test',
                        [
                            'util_test.c',
-                           '../lib/util.c'
+                           '../common/util.c'
                        ],
                        include_directories: [inc, lib_include_dirs])
 
@@ -14,7 +14,7 @@ object_test = executable('object_test',
                              'object_test.c',
                              '../lib/object.c',
                              '../lib/sha1.c',
-                             '../lib/util.c',
+                             '../common/util.c',
                          ],
                          include_directories: [inc, lib_include_dirs],
                          dependencies: zlib_dep)
@@ -27,7 +27,7 @@ commit_object_test = executable('commit-object_test',
                                     '../lib/commit-object.c',
                                     '../lib/object.c',
                                     '../lib/sha1.c',
-                                    '../lib/util.c',
+                                    '../common/util.c',
                                 ],
                                 include_directories: [inc, lib_include_dirs],
                                 dependencies: zlib_dep)
@@ -41,7 +41,7 @@ tree_object_test = executable('tree-object_test',
                                   '../lib/tree-object.c',
                                   '../lib/object.c',
                                   '../lib/sha1.c',
-                                  '../lib/util.c',
+                                  '../common/util.c',
                               ],
                               include_directories: [inc, lib_include_dirs],
                               dependencies: zlib_dep)

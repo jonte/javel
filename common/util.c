@@ -61,6 +61,9 @@ char *resolve_ref(const char *git_dir, const char *ref) {
 
         return resolve_ref(git_dir, buf + 5);
     } else {
+        if (buf[40] == '\n') {
+            buf[40] = '\0';
+        }
         return strndup(buf, sizeof(buf));
     }
 }

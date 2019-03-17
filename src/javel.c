@@ -6,8 +6,10 @@
 #include "log.h"
 #include "ls-tree.h"
 #include "show.h"
+#include "util.h"
 
 #include <argp.h>
+#include <stdlib.h>
 #include <string.h>
 
 static char doc[] =
@@ -19,10 +21,10 @@ static char doc[] =
 "  - Cat the contents of HASH to stdout\n"
 "hash-file FILE\n"
 "  - Hash a file, and store the resulting object\n"
-"show HASH\n"
+"show [HASH]\n"
 "  - Show the contents of a commit\n"
-"log HASH\n"
-"  - Show the log ending with HASH\n"
+"log [HASH]\n"
+"  - Show the log ending with HASH (or HEAD per default)\n"
 "ls-tree HASH\n"
 "  - Show a list of objects referenced by the tree object HASH\n"
 "checkout HASH DIR\n"
@@ -66,6 +68,13 @@ static struct argp argp = { 0, parse_opt, args_doc, doc, 0, 0, 0};
 #define IS_ARG(arg1, arg2)\
     (!strncmp((arg1), (arg2), strlen(arg2)))
 
+static char *get_head(const char *dir) {
+    char *git_dir = find_git_dir(dir);
+    char *ref = resolve_ref(git_dir, "HEAD");
+    free(git_dir);
+
+    return ref;
+}
 
 int main(int argc, char **argv) {
     struct arguments arguments = { 0 };
@@ -93,19 +102,23 @@ int main(int argc, char **argv) {
 
         return jvl_hash_file(arguments.args[1]);
     } else if (IS_ARG(arguments.args[0], "show")) {
+        int ret;
         if (!arguments.args[1]) {
-            ERROR("Second argument must be a valid commit hash");
-            return -1;
+            arguments.args[1] = get_head(".");
         }
 
-        return jvl_show(arguments.args[1]);
+        ret = jvl_show(arguments.args[1]);
+        free(arguments.args[1]);
+        return ret;
     } else if (IS_ARG(arguments.args[0], "log")) {
+        int ret;
         if (!arguments.args[1]) {
-            ERROR("Second argument must be a valid commit hash");
-            return -1;
+            arguments.args[1] = get_head(".");
         }
 
-        return jvl_log(arguments.args[1]);
+        ret = jvl_log(arguments.args[1]);
+        free(arguments.args[1]);
+        return ret;
     } else if (IS_ARG(arguments.args[0], "ls-tree")) {
         if (!arguments.args[1]) {
             ERROR("Second argument must be a valid commit hash");

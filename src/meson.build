@@ -1,5 +1,6 @@
 src = [
-    'javel.c'
+    '../common/util.c',
+    'javel.c',
 ]
 
 jvl = executable('jvl',

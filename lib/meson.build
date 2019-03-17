@@ -2,6 +2,7 @@ lib_src = [
     'cat-file.c',
     'checkout.c',
     'commit-object.c',
+    '../common/util.c',
     'config.c',
     'hash-file.c',
     'init.c',
@@ -11,7 +12,6 @@ lib_src = [
     'sha1.c',
     'show.c',
     'tree-object.c',
-    'util.c',
 ]
 
 libjavel = shared_library('javel',
