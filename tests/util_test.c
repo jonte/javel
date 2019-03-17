@@ -20,7 +20,9 @@ static int default_setup(struct fixture *fx) {
     sprintf(fx->test_dir, "/tmp/util_test_XXXXXX");
 
     ret |= chdir(mkdtemp(fx->test_dir));
-    ret |= system("mkdir .git");
+    ret |= system("mkdir -p .git/refs/heads/");
+    ret |= system("echo 'ref: refs/heads/master' > .git/HEAD");
+    ret |= system("echo 'dummy-hash' > .git/refs/heads/master");
     ret |= system("mkdir -p 1/2/3/4");
     return ret;
 }
@@ -55,6 +57,16 @@ static int test_fails_finding_nonexisting_git_path(struct fixture *fx)
     return 0;
 }
 
+static int test_resolve_indirect_ref(struct fixture *fx)
+{
+    char *git_dir = find_git_dir(fx->test_dir);
+    char *resolved = resolve_ref(git_dir, "HEAD");
+    ASSERT(resolved);
+    ASSERT(!strncmp(resolved, "dummy-hash", 10));
+    free(git_dir);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     (void) argc;
     (void) argv;
@@ -66,4 +78,5 @@ int main(int argc, char **argv) {
 
     TEST_DEFAULT(test_finds_existing_git_path, &fx);
     TEST_DEFAULT(test_fails_finding_nonexisting_git_path, &fx);
+    TEST_DEFAULT(test_resolve_indirect_ref, &fx);
 }

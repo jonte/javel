@@ -3,12 +3,15 @@
 #include <dirent.h>
 #include <errno.h>
 #include <error.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 int is_dir(const char *dir) {
     struct stat sb;
@@ -31,6 +34,35 @@ int file_size(const char *file) {
     }
 
     return sb.st_size;
+}
+
+char *resolve_ref(const char *git_dir, const char *ref) {
+    char path[PATH_MAX];
+    char buf[1024] = { 0 };
+    int fd;
+    int ref_sz;
+
+    snprintf(path, PATH_MAX, "%s/%s", git_dir, ref);
+    fd = open(path, O_RDONLY);
+    if (fd < 0) {
+        ERROR("Failed to open ref %s: %s", path, strerror(errno));
+        return NULL;
+    }
+
+    if ((ref_sz = read(fd, buf, sizeof(buf))) == sizeof(buf)) {
+        ERROR("Ref too long");
+        return NULL;
+    }
+
+    if (!strncmp(buf, "ref: ", 5)) {
+        if (buf[ref_sz-1] == '\n') {
+            buf[ref_sz-1] = '\0';
+        }
+
+        return resolve_ref(git_dir, buf + 5);
+    } else {
+        return strndup(buf, sizeof(buf));
+    }
 }
 
 int num_entries_in_dir(const char *dir) {
