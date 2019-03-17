@@ -12,6 +12,11 @@ static int populate_fields(struct commit_object *obj) {
     int read;
 
     while ((read = object_read(&obj->obj, (uint8_t*)buf, sizeof(buf)-1)) > 0) {
+        if (obj->obj.type != OBJECT_TYPE_COMMIT) {
+            ERROR("Object is not a commit");
+            return -1;
+        }
+
         while (bufp - buf < read) {
             char *bufp_end = bufp;
             while (*bufp_end != '\n' && *bufp_end != '\0') bufp_end++;
@@ -41,7 +46,9 @@ int commit_object_open(struct commit_object *obj,
         return -1;
     }
 
-    populate_fields(obj);
+    if (populate_fields(obj)) {
+        return -1;
+    }
 
     return 0;
 }
