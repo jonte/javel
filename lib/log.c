@@ -1,6 +1,6 @@
 #include "commit-object.h"
 #include "logging.h"
-#include "logging.h"
+#include "log.h"
 #include "show.h"
 #include "util.h"
 

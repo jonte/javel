@@ -1,8 +1,9 @@
-#include "show.h"
-#include "hash-file.h"
 #include "cat-file.h"
+#include "hash-file.h"
 #include "init.h"
 #include "logging.h"
+#include "ls-tree.h"
+#include "show.h"
 
 #include <argp.h>
 #include <string.h>
@@ -20,6 +21,8 @@ static char doc[] =
 "  - Show the contents of a commit\n"
 "log HASH\n"
 "  - Show the log ending with HASH\n"
+"ls-tree HASH\n"
+"  - Show a list of objects referenced by the tree object HASH\n"
 "\n"
 "Options:";
 
@@ -99,6 +102,13 @@ int main(int argc, char **argv) {
         }
 
         return jvl_log(arguments.args[1]);
+    } else if (IS_ARG(arguments.args[0], "ls-tree")) {
+        if (!arguments.args[1]) {
+            ERROR("Second argument must be a valid commit hash");
+            return -1;
+        }
+
+        return jvl_ls_tree(arguments.args[1]);
     } else {
         fprintf(stderr, "Unknown argument '%s'\n", arguments.args[0]);
     }

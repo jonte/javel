@@ -4,6 +4,9 @@
    100% Public Domain
  */
 
+/* for uint32_t */
+#include <stdint.h>
+
 typedef struct
 {
     uint32_t state[5];

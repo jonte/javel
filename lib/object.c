@@ -219,7 +219,7 @@ ssize_t object_read(struct object *obj, uint8_t *buf, size_t count) {
     return read_sz;
 }
 
-static const char *object_type_string(enum object_type type) {
+const char *object_type_string(enum object_type type) {
     return object_type_strings[type];
 }
 

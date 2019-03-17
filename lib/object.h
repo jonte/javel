@@ -34,3 +34,5 @@ char *object_write(struct object *obj,
                    enum object_type type,
                    const char *file,
                    int write_to_db);
+
+const char *object_type_string(enum object_type type);

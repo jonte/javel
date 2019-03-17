@@ -5,11 +5,13 @@ lib_src = [
     'hash-file.c',
     'init.c',
     'libjavel.c',
+    'log.c',
+    'ls-tree.c',
     'object.c',
     'sha1.c',
     'show.c',
+    'tree-object.c',
     'util.c',
-    'log.c',
 ]
 
 libjavel = shared_library('javel',
