@@ -17,6 +17,7 @@ A million repetitions of "a"
 #define SHA1HANDSOFF
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "sha1.h"
@@ -286,7 +287,7 @@ void SHA1( char *hash_out, const char *str, int len)
     hash_out[20] = '\0';
 }
 
-void SHA1DigestString(unsigned char digest[20], char digest_string[41])
+void SHA1DigestString(const unsigned char digest[20], char digest_string[41])
 {
     int j = 0;
     for (int i = 0; i < 20; i++) {
@@ -295,4 +296,16 @@ void SHA1DigestString(unsigned char digest[20], char digest_string[41])
     }
 
     digest_string[40] = '\0';
+}
+
+void SHA1Undigest(unsigned char digest[20], const char digest_string[41])
+{
+    int j = 0;
+    for (int i = 0; i < 20; i++) {
+        char bytes[3] = { 0 };
+        bytes[0] = digest_string[j];
+        bytes[1] = digest_string[j+1];
+        digest[i] = strtoul(bytes, NULL, 16);
+        j+= 2;
+    }
 }

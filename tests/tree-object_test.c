@@ -16,6 +16,7 @@
 struct fixture {
     char *git_dir;
     char *object_hash;
+    struct tree_object tree_obj;
 };
 
 static int default_setup(struct fixture *fx) {
@@ -65,6 +66,82 @@ static int test_can_open_close(struct fixture *fx)
     return 0;
 }
 
+static int test_can_serialize(struct fixture *fx) {
+    uint8_t expected_data[] = {
+        '1', '0', '0', '6', '4', '4', ' ', 't', 'e', 's', 't', '_', 'e', 'n',
+        't', 'r', 'y' , 0x00, 0x9e, 0x87, 0x2b, 0x38, 0xb7, 0xe8, 0xaf, 0x16,
+        0xa6, 0xab, 0xdf, 0xc1, 0x5b, 0xf1, 0x81, 0x74, 0x4c, 0x51, 0xe3, 0xc0,
+
+        '1', '0', '0', '6', '4', '4', ' ', 't', 'e', 's', 't', '_', 'e', 'n',
+        't', 'r', 'y', '2', 0x00, 0x9e, 0x87, 0x2b, 0x38, 0xb7, 0xe8, 0xaf,
+        0x16, 0xa6, 0xab, 0xdf, 0xc1, 0x5b, 0xf1, 0x81, 0x74, 0x4c, 0x51, 0xe3,
+        0xc0
+    };
+
+    uint8_t *actual_data = NULL;
+    ssize_t buf_sz;
+
+    ASSERT(tree_object_add_entry(&fx->tree_obj,
+                                 0644,
+                                 "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
+                                 "test_entry",
+                                 OBJECT_TYPE_BLOB) == 0);
+
+    ASSERT(tree_object_add_entry(&fx->tree_obj,
+                                 0644,
+                                 "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
+                                 "test_entry2",
+                                 OBJECT_TYPE_BLOB) == 0);
+
+    ASSERT((actual_data = tree_object_serialize(&fx->tree_obj, &buf_sz)) != 0);
+    ASSERT(buf_sz == sizeof(expected_data));
+
+    ASSERT(!memcmp(expected_data, actual_data, sizeof(expected_data)));
+
+    return 0;
+}
+
+static int test_can_add(struct fixture *fx) {
+    ASSERT(tree_object_add_entry(&fx->tree_obj,
+                                 0644,
+                                 "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
+                                 "test_entry",
+                                 OBJECT_TYPE_BLOB) == 0);
+
+    ASSERT(tree_object_add_entry(&fx->tree_obj,
+                                 040000,
+                                 "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
+                                 "test_entry_dir",
+                                 OBJECT_TYPE_TREE) == 0);
+
+    ASSERT(tree_object_add_entry(&fx->tree_obj,
+                                  040000,
+                                  "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
+                                  "test_entry_dir",
+                                  OBJECT_TYPE_COMMIT) != 0);
+
+    ASSERT(tree_object_add_entry(&fx->tree_obj,
+                                 040000,
+                                 "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
+                                 "test_entry_dir",
+                                 OBJECT_TYPE_TAG) != 0);
+
+    return 0;
+}
+
+static int test_can_write(struct fixture *fx) {
+    struct tree_object tree_obj = { 0 };
+
+    ASSERT(tree_object_add_entry(&tree_obj,
+                                 040000,
+                                 "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
+                                 "test_entry_dir",
+                                 OBJECT_TYPE_TREE) == 0);
+
+    tree_object_write(&tree_obj, fx->git_dir);
+
+    return 0;
+}
 
 int main(int argc, char **argv) {
     (void) argc;
@@ -73,13 +150,17 @@ int main(int argc, char **argv) {
     /* Test on ourselves. This assumes the tests are executed from a child
      * directory of the Jävel source tree.. And that the referenced commit
      * exists - don't force push ;) */
-    {
-        struct fixture fx = {
-            find_git_dir("."),
-            "27ab33d6995bec35fef5eb06fb353e5b598a3978",
-        };
 
-        TEST_DEFAULT(test_can_open_close, &fx);
-        free(fx.git_dir);
-    }
+    struct fixture fx = { 0 };
+    fx.git_dir = find_git_dir(".");
+    fx.object_hash = "27ab33d6995bec35fef5eb06fb353e5b598a3978";
+
+    TEST_DEFAULT(test_can_open_close, &fx);
+    TEST_DEFAULT(test_can_serialize, &fx);
+    TEST_DEFAULT(test_can_add, &fx);
+    TEST_DEFAULT(test_can_write, &fx);
+    free(fx.git_dir);
+
+
+    return 0;
 }

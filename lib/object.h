@@ -38,3 +38,16 @@ char *object_write(struct object *obj,
                    int write_to_db);
 
 const char *object_type_string(enum object_type type);
+
+uint8_t *object_serialize(struct object *obj,
+                          enum object_type type,
+                          uint8_t *buffer_in,
+                          ssize_t buffer_in_sz,
+                          ssize_t *buffer_out_used,
+                          char hash_out[41]);
+
+int object_write_to_file(struct object *obj,
+                         const char *git_dir,
+                         const uint8_t *buffer_out,
+                         ssize_t buffer_out_sz,
+                         const char *digest_string);

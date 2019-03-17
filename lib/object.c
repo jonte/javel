@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 #define MIN_OBJECT_HEADER_SZ 100
+#define ZLIB_COMPRESSION_LEVEL 0
 
 static const mode_t default_mode =
     S_IRUSR | S_IWUSR | S_IXUSR |
@@ -90,6 +91,10 @@ static int parse_object_header(struct object *obj,
     }
 
     return endptr - buf;
+}
+
+const char *object_type_string(enum object_type type) {
+    return object_type_strings[type];
 }
 
 int object_open(struct object *obj,
@@ -224,8 +229,86 @@ ssize_t object_read(struct object *obj, uint8_t *buf, size_t count) {
     return read_sz;
 }
 
-const char *object_type_string(enum object_type type) {
-    return object_type_strings[type];
+uint8_t *object_serialize(struct object *obj,
+                          enum object_type type,
+                          uint8_t *buffer_in,
+                          ssize_t buffer_in_sz,
+                          ssize_t *buffer_out_used,
+                          char hash_out[41])
+{
+    SHA1_CTX context;
+    uint8_t digest[20] = { 0 };
+    uint8_t *buffer_out;
+    char digest_string[41];
+    int ret;
+    uint8_t header[MIN_OBJECT_HEADER_SZ] = { 0 };
+    ssize_t header_sz = 0;
+
+    setup_zlib_deflate(obj, ZLIB_COMPRESSION_LEVEL);
+
+    header_sz = snprintf((char*)header, MIN_OBJECT_HEADER_SZ, "%s %ld",
+                         object_type_string(type), buffer_in_sz) + 1;
+
+    /* This should be calculated better ..*/
+    ssize_t buffer_out_sz = (header_sz + buffer_in_sz) * 2;
+    if (buffer_in_sz < 0) {
+        return NULL;
+    }
+
+    buffer_out = calloc(buffer_out_sz, 1);
+    if (!buffer_out) {
+        ERROR("Failed to allocate memory for object compression");
+        free(buffer_out);
+        return NULL;
+    }
+
+    /* Deflate header */
+    obj->strm_def.avail_out = buffer_out_sz;
+    obj->strm_def.next_out = buffer_out;
+
+    obj->strm_def.avail_in = header_sz;
+    obj->strm_def.next_in = header;
+
+    ret = deflate(&obj->strm_def, Z_NO_FLUSH);
+    assert(ret != Z_STREAM_ERROR);
+
+    /* Deflate data */
+    obj->strm_def.avail_in = buffer_in_sz;
+    obj->strm_def.next_in = buffer_in;
+
+    ret = deflate(&obj->strm_def, Z_FINISH);
+    assert(ret != Z_STREAM_ERROR);
+
+    *buffer_out_used = buffer_out_sz - obj->strm_def.avail_out;
+
+    SHA1Init(&context);
+    SHA1Update(&context, buffer_out, *buffer_out_used);
+    SHA1Final(digest, &context);
+    SHA1DigestString(digest, digest_string);
+
+    deflateEnd(&obj->strm_def);
+
+    strncpy(hash_out, digest_string, 41);
+
+    return buffer_out;
+}
+
+int object_write_to_file(struct object *obj,
+                         const char *git_dir,
+                         const uint8_t *buffer_out,
+                         ssize_t buffer_out_sz,
+                         const char *digest_string)
+{
+    int ret = object_open(obj, git_dir, digest_string, 1);
+
+    if (!ret) {
+        if (write(obj->fd, buffer_out, buffer_out_sz) != buffer_out_sz) {
+            ERROR("Failed to write object to file");
+            return -1;
+        }
+    }
+
+    return 0;
 }
 
 char *object_write(struct object *obj,
@@ -233,21 +316,15 @@ char *object_write(struct object *obj,
                    const char *file,
                    int write_to_db)
 {
-    SHA1_CTX context;
-    char header[MIN_OBJECT_HEADER_SZ] = { 0 };
-    uint8_t digest[20] = { 0 };
-    uint8_t *buffer_in, *buffer_out;
-    char digest_string[41];
-    ssize_t header_sz = 0;
+    uint8_t *buffer_in = NULL;
+    uint8_t *buffer_out;
     int fd;
-    int ret;
-    int buffer_out_used;
-
-    setup_zlib_deflate(obj, 6);
+    char digest_string[41];
+    ssize_t buffer_out_sz;
+    ssize_t data_read;
 
     ssize_t buffer_in_sz = file_size(file);
-    /* This should be calculated better ..*/
-    ssize_t buffer_out_sz = buffer_in_sz * 2;
+
     if (buffer_in_sz < 0) {
         return NULL;
     }
@@ -258,52 +335,27 @@ char *object_write(struct object *obj,
         return NULL;
     }
 
-    header_sz = snprintf((char*)header, MIN_OBJECT_HEADER_SZ, "%s %ld",
-                         object_type_string(type), buffer_in_sz);
-    buffer_in_sz += header_sz;
-
-    buffer_in = malloc(buffer_in_sz + 1);
-    buffer_out = malloc(buffer_out_sz);
-    if (!buffer_in || !buffer_out) {
-        ERROR("Failed to allocate memory for object compression");
-        free(buffer_in);
-        free(buffer_out);
+    buffer_in = malloc(buffer_in_sz * sizeof(*buffer_in));
+    if (!buffer_in) {
+        ERROR("Unable to allocate buffer");
         return NULL;
     }
 
-    strncpy((char*)buffer_in, header, header_sz);
+    data_read = read(fd, buffer_in, buffer_in_sz);
+    if (data_read != buffer_in_sz) {
+        ERROR("Unable to read all of %s: %s", file, strerror(errno));
+        return NULL;
+    }
 
-    assert(read(fd, buffer_in + header_sz + 1, buffer_in_sz - header_sz) ==
-           buffer_in_sz - header_sz);
-
-    obj->strm_def.avail_in = buffer_in_sz;
-    obj->strm_def.next_in = buffer_in;
-    obj->strm_def.avail_out = buffer_out_sz;
-    obj->strm_def.next_out = buffer_out;
-
-    ret = deflate(&obj->strm_def, Z_FINISH);
-    assert(ret != Z_STREAM_ERROR);
-    buffer_out_used = buffer_out_sz - obj->strm_def.avail_out;
-
-    SHA1Init(&context);
-    SHA1Update(&context, buffer_out, buffer_out_used);
-    SHA1Final(digest, &context);
-    SHA1DigestString(digest, digest_string);
+    buffer_out = object_serialize(obj, type, buffer_in, buffer_in_sz,
+                                  &buffer_out_sz, digest_string);
 
     if (write_to_db) {
         char *git_dir = find_git_dir(".");
-        int ret = object_open(obj, git_dir, digest_string, 1);
+        object_write_to_file(obj, git_dir, buffer_out, buffer_out_sz,
+                             digest_string);
         free(git_dir);
-
-        if (!ret) {
-            assert(write(obj->fd, buffer_out, buffer_out_used) ==
-                   buffer_out_used);
-        }
     }
 
-    free(buffer_in);
-    free(buffer_out);
-    deflateEnd(&obj->strm_def);
-
-    return strdup(digest_string);
+    return strndup(digest_string, sizeof(digest_string));
 }
