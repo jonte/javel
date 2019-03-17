@@ -1,3 +1,5 @@
+#pragma once
+
 /**
  * Initialize a directory with a new .git directory
  *

@@ -1,7 +1,9 @@
 #include "cat-file.h"
+#include "checkout.h"
 #include "hash-file.h"
 #include "init.h"
 #include "logging.h"
+#include "log.h"
 #include "ls-tree.h"
 #include "show.h"
 
@@ -23,6 +25,8 @@ static char doc[] =
 "  - Show the log ending with HASH\n"
 "ls-tree HASH\n"
 "  - Show a list of objects referenced by the tree object HASH\n"
+"checkout HASH DIR\n"
+"  - Check out the commit HASH in the directory DIR\n"
 "\n"
 "Options:";
 
@@ -44,7 +48,7 @@ parse_opt (int key, char *arg, struct argp_state *state)
             break;
 
         case ARGP_KEY_ARG:
-            if (state->arg_num >= 2)
+            if (state->arg_num >= 3)
                 argp_usage (state);
 
             arguments->args[state->arg_num] = arg;
@@ -109,6 +113,18 @@ int main(int argc, char **argv) {
         }
 
         return jvl_ls_tree(arguments.args[1]);
+    } else if (IS_ARG(arguments.args[0], "checkout")) {
+        if (!arguments.args[1]) {
+            ERROR("Second argument must be a valid commit hash");
+            return -1;
+        }
+
+        if (!arguments.args[2]) {
+            ERROR("Third argument must be an empty directory to checkout in");
+            return -1;
+        }
+
+        return jvl_checkout(arguments.args[1], arguments.args[2]);
     } else {
         fprintf(stderr, "Unknown argument '%s'\n", arguments.args[0]);
     }

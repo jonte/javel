@@ -1,10 +1,10 @@
 lib_src = [
     'cat-file.c',
+    'checkout.c',
     'commit-object.c',
     'config.c',
     'hash-file.c',
     'init.c',
-    'libjavel.c',
     'log.c',
     'ls-tree.c',
     'object.c',

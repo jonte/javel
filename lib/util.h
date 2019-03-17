@@ -1,3 +1,5 @@
+#pragma once
+
 int num_entries_in_dir (const char *dir);
 int is_dir(const char *dir);
 int is_file(const char *file);

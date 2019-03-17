@@ -165,6 +165,10 @@ static ssize_t read_compressed_chunk(z_stream *strm, uint8_t *buf,
                 ERROR("Decompressing object failed");
                 return -1;
         }
+
+        if (ret == Z_BUF_ERROR) {
+            break;
+        }
     }
 
     return count - strm->avail_out;

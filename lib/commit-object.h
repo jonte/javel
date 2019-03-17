@@ -1,3 +1,5 @@
+#pragma once
+
 #include "object.h"
 
 struct commit_object {

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stddef.h>
 
 struct config_entry {

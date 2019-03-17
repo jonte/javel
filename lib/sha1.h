@@ -1,3 +1,5 @@
+#pragma once
+
 /*
    SHA-1 in C
    By Steve Reid <steve@edmweb.com>
