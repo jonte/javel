@@ -14,7 +14,8 @@ enum object_type {
 
 struct object {
     int fd;
-    z_stream strm;
+    z_stream strm_inf;
+    z_stream strm_def;
     uint8_t comp_buf[OBJECT_READ_BUF_SZ];
     enum object_type type;
     ssize_t size;

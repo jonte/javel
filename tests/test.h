@@ -21,4 +21,10 @@ typedef int (*teardown_fun)(void);
     TEST(f, default_setup, default_teardown, fx);   \
 }
 
-#define ASSERT(x) {if (!(x)) return 1;}
+#define ASSERT(x) {                                     \
+    if (!(x)) {                                         \
+        printf("Assertion failed: '" #x                 \
+               "' in " __FILE__ ":%d\n", __LINE__);     \
+        return 1;                                       \
+    }                                                   \
+}

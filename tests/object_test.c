@@ -47,21 +47,21 @@ static int default_teardown(struct fixture *fx) {
 
 static int test_can_open_close(struct fixture *fx)
 {
-    struct object obj;
+    struct object obj = { 0 };
     ASSERT(object_open(&obj, fx->git_dir, fx->object_hash, 0) == 0);
     ASSERT(object_close(&obj) == 0);
     return 0;
 }
 
-static int test_can_read(struct fixture *fx)
+static int test_can_read_helper(struct fixture *fx, int read_sz)
 {
-    struct object obj;
-    uint8_t buf[128] = { 0 };
+    struct object obj = { 0 };
+    uint8_t *buf = malloc(read_sz * sizeof(*buf));;
     int len;
 
 
     ASSERT(object_open(&obj, fx->git_dir, fx->object_hash, 0) == 0);
-    while ((len = object_read(&obj, buf, sizeof(buf))) > 0) {
+    while ((len = object_read(&obj, buf, read_sz)) > 0) {
         ASSERT(len > 0);
         for (int i = 0; i < len; i++) {
 #if 0 /* print contents of decompressed stream */
@@ -72,7 +72,21 @@ static int test_can_read(struct fixture *fx)
     ASSERT(len >= 0);
     ASSERT(object_close(&obj) == 0);
 
+    free(buf);
+
     return 0;
+}
+
+static int test_can_read(struct fixture *fx) {
+    return test_can_read_helper(fx, 100);
+}
+
+static int test_can_read_big(struct fixture *fx) {
+    return test_can_read_helper(fx, 0x7FFFF);
+}
+
+static int test_can_read_bytewise(struct fixture *fx) {
+    return test_can_read_helper(fx, 1);
 }
 
 static int test_can_write(struct fixture *fx)
@@ -81,10 +95,9 @@ static int test_can_write(struct fixture *fx)
     char *hash = 0;
 
     hash = object_write(&obj, OBJECT_TYPE_BLOB, fx->write_file, 1);
-
     ASSERT(hash);
-
     free(hash);
+    ASSERT(object_close(&obj) == 0);
 
     return 0;
 }
@@ -105,6 +118,8 @@ int main(int argc, char **argv) {
 
         TEST_DEFAULT(test_can_open_close, &fx);
         TEST_DEFAULT(test_can_read, &fx);
+        TEST_DEFAULT(test_can_read_bytewise, &fx);
+        TEST_DEFAULT(test_can_read_big, &fx);
         free(fx.git_dir);
     }
 

@@ -31,12 +31,12 @@ static char *object_type_strings[] = {
 };
 
 static int setup_zlib_inflate(struct object *obj) {
-    obj->strm.zalloc = Z_NULL;
-    obj->strm.zfree = Z_NULL;
-    obj->strm.opaque = Z_NULL;
-    obj->strm.avail_in = 0;
-    obj->strm.next_in = Z_NULL;
-    if (inflateInit(&obj->strm) != Z_OK) {
+    obj->strm_inf.zalloc = Z_NULL;
+    obj->strm_inf.zfree = Z_NULL;
+    obj->strm_inf.opaque = Z_NULL;
+    obj->strm_inf.avail_in = 0;
+    obj->strm_inf.next_in = Z_NULL;
+    if (inflateInit(&obj->strm_inf) != Z_OK) {
         return -1;
     }
 
@@ -44,10 +44,10 @@ static int setup_zlib_inflate(struct object *obj) {
 }
 
 static int setup_zlib_deflate(struct object *obj, int level) {
-    obj->strm.zalloc = Z_NULL;
-    obj->strm.zfree = Z_NULL;
-    obj->strm.opaque = Z_NULL;
-    if (deflateInit(&obj->strm, level) != Z_OK) {
+    obj->strm_def.zalloc = Z_NULL;
+    obj->strm_def.zfree = Z_NULL;
+    obj->strm_def.opaque = Z_NULL;
+    if (deflateInit(&obj->strm_def, level) != Z_OK) {
         return -1;
     }
 
@@ -57,14 +57,7 @@ static int setup_zlib_deflate(struct object *obj, int level) {
 static int parse_object_header(struct object *obj,
                                const uint8_t *buf,
                                size_t count) {
-    /* We haven't seen the type or size yet, so this should be the first
-     * pass on the object */
-    if (count < MIN_OBJECT_HEADER_SZ) {
-        ERROR("The first read must be bigger than %d bytes to "
-              "accomodate for the git object header",
-              MIN_OBJECT_HEADER_SZ);
-        return -1;
-    }
+    uint8_t *endptr = 0;
 
     if (!memcmp(buf, "blob", 4)) {
         obj->type = OBJECT_TYPE_BLOB;
@@ -75,13 +68,12 @@ static int parse_object_header(struct object *obj,
     } else if (!memcmp(buf, "tag", 3)) {
         obj->type = OBJECT_TYPE_TAG;
     } else {
-        ERROR("Unknown object type");
+        ERROR("Unknown object type/not a header");
         return -1;
     }
 
-    for (int i = 0; i < MIN_OBJECT_HEADER_SZ; i++) {
+    for (size_t i = 0; i < count; i++) {
         if (buf[i] == 0x20) {
-            uint8_t *endptr = 0;
             obj->size = strtol((char*)buf+i, (char**)&endptr, 10);
             if (endptr == buf+i) {
                 ERROR("Invalid size field in object");
@@ -92,12 +84,12 @@ static int parse_object_header(struct object *obj,
         }
     }
 
-    if (obj->type == OBJECT_TYPE_UNKNOWN || obj->size == -1) {
+    if (!endptr || obj->type == OBJECT_TYPE_UNKNOWN || obj->size == -1) {
         ERROR("Unable to parse object header");
         return -1;
     }
 
-    return 0;
+    return endptr - buf;
 }
 
 int object_open(struct object *obj,
@@ -138,45 +130,30 @@ int object_open(struct object *obj,
 
     setup_zlib_inflate(obj);
 
+    /* Parse header */
+    object_read(obj, NULL, 0);
+
     return 0;
 }
 
 int object_close(struct object *obj) {
     close(obj->fd);
-    if (inflateEnd(&obj->strm) != Z_OK) {
-        return -1;
-    }
+    inflateEnd(&obj->strm_inf);
+    deflateEnd(&obj->strm_def);
 
     return 0;
 }
 
-ssize_t object_read(struct object *obj, uint8_t *buf, size_t count) {
-    ssize_t status;
+static ssize_t read_compressed_chunk(z_stream *strm, uint8_t *buf,
+                                     size_t count)
+{
     int ret = 0;
 
-    obj->strm.avail_out = count;
-    obj->strm.next_out = buf;
+    strm->avail_out = count;
+    strm->next_out = buf;
 
-    if (obj->strm.avail_in == 0) {
-        status = read(obj->fd, obj->comp_buf, OBJECT_READ_BUF_SZ);
-
-        if (status < 0) {
-            ERROR("Failed to read compressed object data: %s",
-                  strerror(errno));
-            return -1;
-        }
-
-        /* EOF */
-        if (status == 0)
-            return 0;
-
-        obj->strm.avail_in = (size_t)status;
-        obj->strm.next_in = obj->comp_buf;
-
-    }
-
-    while (ret != Z_STREAM_END && obj->strm.avail_out > 0) {
-        ret = inflate(&obj->strm, Z_NO_FLUSH);
+    while (ret != Z_STREAM_END && strm->avail_out > 0) {
+        ret = inflate(strm, Z_NO_FLUSH);
         assert(ret != Z_STREAM_ERROR);
         switch (ret) {
             case Z_NEED_DICT:
@@ -190,20 +167,56 @@ ssize_t object_read(struct object *obj, uint8_t *buf, size_t count) {
         }
     }
 
-    if (obj->type == OBJECT_TYPE_UNKNOWN && obj->size == -1) {
-        int header_sz = 0;
-        if (parse_object_header(obj, buf, count)) {
+    return count - strm->avail_out;
+}
+
+ssize_t object_read(struct object *obj, uint8_t *buf, size_t count) {
+    ssize_t status;
+    ssize_t read_sz = 0;
+
+    if (obj->strm_inf.avail_in == 0) {
+        status = read(obj->fd, obj->comp_buf, OBJECT_READ_BUF_SZ);
+
+        if (status < 0) {
+            ERROR("Failed to read compressed object data: %s",
+                  strerror(errno));
             return -1;
         }
 
-        /* Since we're sneakily using the caller's buffer to inflate all data,
-         * we need to strip the header from the buffer on the first read */
-        for (header_sz = 0; buf[header_sz] != 0; header_sz++);
-        memmove(buf, buf+header_sz+1, count - obj->strm.avail_out - header_sz);
-        count -= header_sz;
+        /* EOF */
+        if (status == 0)
+            return 0;
+
+        obj->strm_inf.avail_in = (size_t)status;
+        obj->strm_inf.next_in = obj->comp_buf;
+
     }
 
-    return count - obj->strm.avail_out;
+    if (obj->type == OBJECT_TYPE_UNKNOWN && obj->size == -1) {
+        uint8_t header[MIN_OBJECT_HEADER_SZ];
+        int header_end = 0;
+
+        for (header_end = 0; header_end < MIN_OBJECT_HEADER_SZ; header_end++) {
+            read_compressed_chunk(&obj->strm_inf, header + header_end, 1);
+
+            if (header[header_end] == '\0') {
+                break;
+            }
+        }
+
+        if (header_end == MIN_OBJECT_HEADER_SZ) {
+            ERROR("No object header found");
+            return -1;
+        }
+
+        if (parse_object_header(obj, header, header_end) < 0) {
+            return -1;
+        }
+    }
+
+    read_sz = read_compressed_chunk(&obj->strm_inf, buf, count);
+
+    return read_sz;
 }
 
 static const char *object_type_string(enum object_type type) {
@@ -244,7 +257,7 @@ char *object_write(struct object *obj,
                          object_type_string(type), buffer_in_sz);
     buffer_in_sz += header_sz;
 
-    buffer_in = malloc(buffer_in_sz);
+    buffer_in = malloc(buffer_in_sz + 1);
     buffer_out = malloc(buffer_out_sz);
     if (!buffer_in || !buffer_out) {
         ERROR("Failed to allocate memory for object compression");
@@ -255,14 +268,14 @@ char *object_write(struct object *obj,
     assert(read(fd, buffer_in + header_sz + 1, buffer_in_sz - header_sz) ==
            buffer_in_sz - header_sz);
 
-    obj->strm.avail_in = buffer_in_sz;
-    obj->strm.next_in = buffer_in;
-    obj->strm.avail_out = buffer_out_sz;
-    obj->strm.next_out = buffer_out;
+    obj->strm_def.avail_in = buffer_in_sz;
+    obj->strm_def.next_in = buffer_in;
+    obj->strm_def.avail_out = buffer_out_sz;
+    obj->strm_def.next_out = buffer_out;
 
-    ret = deflate(&obj->strm, Z_FINISH);
+    ret = deflate(&obj->strm_def, Z_FINISH);
     assert(ret != Z_STREAM_ERROR);
-    buffer_out_used = buffer_out_sz - obj->strm.avail_out;
+    buffer_out_used = buffer_out_sz - obj->strm_def.avail_out;
 
     SHA1Init(&context);
     SHA1Update(&context, buffer_out, buffer_out_used);
@@ -270,7 +283,9 @@ char *object_write(struct object *obj,
     SHA1DigestString(digest, digest_string);
 
     if (write_to_db) {
-        int ret = object_open(obj, find_git_dir("."), digest_string, 1);
+        char *git_dir = find_git_dir(".");
+        int ret = object_open(obj, git_dir, digest_string, 1);
+        free(git_dir);
 
         if (!ret) {
             assert(write(obj->fd, buffer_out, buffer_out_used) ==
@@ -280,7 +295,7 @@ char *object_write(struct object *obj,
 
     free(buffer_in);
     free(buffer_out);
-    deflateEnd(&obj->strm);
+    deflateEnd(&obj->strm_def);
 
     return strdup(digest_string);
 }

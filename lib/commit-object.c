@@ -8,31 +8,42 @@
 
 static int populate_fields(struct commit_object *obj) {
     char buf[BUF_SZ] = { 0 };
-    char *bufp = buf;
-    int read;
+    int remaining = obj->obj.size;
 
-    while ((read = object_read(&obj->obj, (uint8_t*)buf, sizeof(buf)-1)) > 0) {
-        if (obj->obj.type != OBJECT_TYPE_COMMIT) {
-            ERROR("Object is not a commit");
-            return -1;
-        }
-
-        while (bufp - buf < read) {
-            char *bufp_end = bufp;
-            while (*bufp_end != '\n' && *bufp_end != '\0') bufp_end++;
-            if (!strncmp(bufp, "tree", 4)) {
-                obj->tree = strndup(bufp + 5, bufp_end - bufp - 5);
-            } else if (!strncmp(bufp, "author", 6)) {
-                obj->author = strndup(bufp + 7, bufp_end - bufp - 7);
-            } else if (!strncmp(bufp, "parent", 6)) {
-                obj->parent = strndup(bufp + 7, bufp_end - bufp- 7);
-            } else if (!strncmp(bufp, "committer", 9)) {
-                obj->committer = strndup(bufp + 10, bufp_end - bufp - 10);
-            } else if (!strncmp(bufp, "\n", 1)) {
-                obj->message = strdup(bufp + 1);
+    while (remaining > 0) {
+        int read = 0;
+        for (read = 0; read < BUF_SZ; read++) {
+            if (object_read(&obj->obj, (uint8_t*)buf + read, 1) < 1) {
+                break;
             }
-            bufp = bufp_end + 1;
+
+            if (buf[read] == '\n') {
+                buf[read] = '\0';
+                break;
+            }
         }
+
+        if (!strncmp(buf, "tree", 4)) {
+            obj->tree = strdup(buf + 5);
+        } else if (!strncmp(buf, "author", 6)) {
+            obj->author = strdup(buf + 7);
+        } else if (!strncmp(buf, "parent", 6)) {
+            obj->parent = strdup(buf + 7);
+        } else if (!strncmp(buf, "committer", 9)) {
+            obj->committer = strdup(buf + 10);
+        } else if (buf[0] == '\0' && remaining > 0) {
+            obj->message = calloc(remaining, sizeof(*obj->message));
+            read += object_read(&obj->obj, (uint8_t *)obj->message, remaining);
+            if (read < 0)
+            {
+                ERROR("Failed to read message");
+                return -1;
+            }
+
+            return 0;
+        }
+
+        remaining -= read;
     }
 
     return 0;
