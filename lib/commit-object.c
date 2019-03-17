@@ -1,5 +1,5 @@
 #include "commit-object.h"
-#include "log.h"
+#include "logging.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -69,12 +69,20 @@ int commit_object_close(struct commit_object *obj)
     if (object_close(&obj->obj)) {
         return -1;
     }
-
     free(obj->tree);
+    obj->tree = NULL;
+
     free(obj->parent);
+    obj->parent = NULL;
+
     free(obj->author);
+    obj->author = NULL;
+
     free(obj->committer);
+    obj->committer = NULL;
+
     free(obj->message);
+    obj->message = NULL;
 
     return 0;
 }

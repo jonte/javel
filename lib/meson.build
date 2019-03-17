@@ -9,6 +9,7 @@ lib_src = [
     'sha1.c',
     'show.c',
     'util.c',
+    'log.c',
 ]
 
 libjavel = shared_library('javel',

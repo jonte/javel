@@ -1,5 +1,5 @@
 #include "config.h"
-#include "log.h"
+#include "logging.h"
 
 #include <stddef.h>
 #include <stdlib.h>

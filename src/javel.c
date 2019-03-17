@@ -2,7 +2,7 @@
 #include "hash-file.h"
 #include "cat-file.h"
 #include "init.h"
-#include "log.h"
+#include "logging.h"
 
 #include <argp.h>
 #include <string.h>
@@ -18,6 +18,8 @@ static char doc[] =
 "  - Hash a file, and store the resulting object\n"
 "show HASH\n"
 "  - Show the contents of a commit\n"
+"log HASH\n"
+"  - Show the log ending with HASH\n"
 "\n"
 "Options:";
 
@@ -90,6 +92,13 @@ int main(int argc, char **argv) {
         }
 
         return jvl_show(arguments.args[1]);
+    } else if (IS_ARG(arguments.args[0], "log")) {
+        if (!arguments.args[1]) {
+            ERROR("Second argument must be a valid commit hash");
+            return -1;
+        }
+
+        return jvl_log(arguments.args[1]);
     } else {
         fprintf(stderr, "Unknown argument '%s'\n", arguments.args[0]);
     }
