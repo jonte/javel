@@ -136,12 +136,16 @@ int object_open(struct object *obj,
     obj->size = -1;
     obj->type = OBJECT_TYPE_UNKNOWN;
 
+    setup_zlib_inflate(obj);
+
     return 0;
 }
 
 int object_close(struct object *obj) {
     close(obj->fd);
-    inflateEnd(&obj->strm);
+    if (inflateEnd(&obj->strm) != Z_OK) {
+        return -1;
+    }
 
     return 0;
 }
@@ -149,8 +153,6 @@ int object_close(struct object *obj) {
 ssize_t object_read(struct object *obj, uint8_t *buf, size_t count) {
     ssize_t status;
     int ret = 0;
-
-    setup_zlib_inflate(obj);
 
     obj->strm.avail_out = count;
     obj->strm.next_out = buf;
@@ -197,7 +199,7 @@ ssize_t object_read(struct object *obj, uint8_t *buf, size_t count) {
         /* Since we're sneakily using the caller's buffer to inflate all data,
          * we need to strip the header from the buffer on the first read */
         for (header_sz = 0; buf[header_sz] != 0; header_sz++);
-        memmove(buf, buf+header_sz, count - obj->strm.avail_out - header_sz);
+        memmove(buf, buf+header_sz+1, count - obj->strm.avail_out - header_sz);
         count -= header_sz;
     }
 

@@ -20,3 +20,16 @@ object_test = executable('object_test',
                          dependencies: zlib_dep)
 
 test('object test', object_test)
+
+commit_object_test = executable('commit-object_test',
+                                [
+                                'commit-object_test.c',
+                                '../lib/commit-object.c',
+                                '../lib/object.c',
+                                '../lib/sha1.c',
+                                '../lib/util.c',
+                                ],
+                                include_directories: [inc, lib_include_dirs],
+                                dependencies: zlib_dep)
+
+test('commit-object test', commit_object_test)
