@@ -133,10 +133,10 @@ static int test_can_write(struct fixture *fx) {
     struct tree_object tree_obj = { 0 };
 
     ASSERT(tree_object_add_entry(&tree_obj,
-                                 040000,
-                                 "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
-                                 "test_entry_dir",
-                                 OBJECT_TYPE_TREE) == 0);
+                                 0644,
+                                 "a559ebabec4b9bd15576851743692771640c12ea",
+                                 "test_",
+                                 OBJECT_TYPE_BLOB) == 0);
 
     tree_object_write(&tree_obj, fx->git_dir);
 
