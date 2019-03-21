@@ -1,0 +1,25 @@
+dist: xenial
+language: c
+compiler:
+  - gcc
+
+addons:
+  apt:
+    packages:
+    - build-essential
+    - python3-pip
+    - python3-setuptools
+    - ninja-build
+
+before_install:
+    - sudo pip3 install meson
+
+
+script:
+  - mv .git/objects/pack/*.pack .
+  - git unpack-objects < *.pack
+  - mkdir build
+  - meson build
+  - cd build
+  - ninja
+  - meson test -v
