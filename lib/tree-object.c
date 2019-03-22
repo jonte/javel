@@ -112,7 +112,7 @@ uint8_t *tree_object_serialize(const struct tree_object *obj, ssize_t *buf_sz) {
     return buf;
 }
 
-int tree_object_write(struct tree_object *obj, const char *git_dir) {
+char *tree_object_write(struct tree_object *obj, const char *git_dir) {
     struct object obj_to_write = { 0 };
     ssize_t uncomp_buf_sz;
     ssize_t comp_buf_sz;
@@ -126,13 +126,13 @@ int tree_object_write(struct tree_object *obj, const char *git_dir) {
     if (object_write_to_file(&obj_to_write, git_dir, comp_buf, comp_buf_sz,
                              hash))
     {
-        return -1;
+        return NULL;
     }
 
     free(uncomp_buf);
     free(comp_buf);
 
-    return 0;
+    return strdup(hash);
 }
 
 int tree_object_add_entry(struct tree_object *obj,

@@ -21,7 +21,7 @@ int tree_object_open(struct tree_object *obj,
 
 int tree_object_close(struct tree_object *obj);
 
-int tree_object_write(struct tree_object *obj, const char *git_dir);
+char *tree_object_write(struct tree_object *obj, const char *git_dir);
 
 int tree_object_new(struct tree_object *obj);
 

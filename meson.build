@@ -1,6 +1,10 @@
 project('Jävel', 'c',
         version: '0.0.1',
-        license: 'MIT')
+        license: 'MIT',
+        default_options: [
+            'c_std=gnu11'
+        ]
+)
 
 inc = include_directories(['include', 'common'])
 

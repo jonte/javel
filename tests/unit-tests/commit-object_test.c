@@ -36,6 +36,52 @@ static int test_can_open_close(struct fixture *fx)
     return 0;
 }
 
+static int test_can_serialize(struct fixture *fx)
+{
+    (void) fx;
+    struct commit_object commit_obj = { 0 };
+    struct object obj = { 0 };
+    char parent[41] = {"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"};
+    char tree[41] = {"BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"};
+    struct identity author = {
+        "Author",
+        "author@email.com",
+        1553287130,
+        100
+    };
+
+    struct identity committer = {
+        "Committer",
+        "committer@email.com",
+        1553287131,
+        200
+    };
+
+    char *message = "Commit message";
+    uint8_t *serialized_commit = NULL;
+    ssize_t serialized_sz;
+    char hash[41] = { 0 };
+
+    ASSERT(commit_object_new(&commit_obj,
+                             parent,
+                             tree,
+                             &author,
+                             &committer,
+                             message) == 0);
+
+    serialized_commit = commit_object_serialize(&commit_obj, &serialized_sz);
+    ASSERT(serialized_sz > 0);
+    object_serialize(&obj,
+                     OBJECT_TYPE_COMMIT,
+                     serialized_commit,
+                     serialized_sz,
+                     &serialized_sz,
+                     hash);
+    ASSERT(serialized_sz > 0);
+
+    return 0;
+}
+
 
 int main(int argc, char **argv) {
     (void) argc;
@@ -44,14 +90,12 @@ int main(int argc, char **argv) {
     /* Test on ourselves. This assumes the tests are executed from a child
      * directory of the Jävel source tree.. And that the referenced commit
      * exists - don't force push ;) */
-    {
-        struct fixture fx = {
-            find_git_dir("."),
-            "01ab57b643fdb569202168b5d2b6b3c58b3c1e6b"
-            ""
-        };
+    struct fixture fx = {
+        find_git_dir("."),
+        "01ab57b643fdb569202168b5d2b6b3c58b3c1e6b"
+    };
 
-        TEST_DEFAULT(test_can_open_close, &fx);
-        free(fx.git_dir);
-    }
+    TEST_DEFAULT(test_can_open_close, &fx);
+    TEST_DEFAULT(test_can_serialize, &fx);
+    free(fx.git_dir);
 }

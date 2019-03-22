@@ -1,6 +1,7 @@
 lib_src = [
     'cat-file.c',
     'checkout.c',
+    'commit.c',
     'commit-object.c',
     '../common/util.c',
     'config.c',

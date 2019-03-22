@@ -19,11 +19,15 @@ int jvl_show(const char *hash) {
         return -1;
     }
 
-    printf("commit: %s\n", hash);
-    printf("tree: %s\n", obj.tree);
-    printf("parent: %s\n", obj.parent);
-    printf("author: %s\n", obj.author);
-    printf("committer: %s\n", obj.committer);
+    printf("Commit: %s\n", hash);
+    printf("Tree: %s\n", obj.tree);
+
+    if (obj.parent[0]) {
+        printf("Parent: %s\n", obj.parent);
+    }
+
+    printf("Author: %s <%s>\n", obj.author.name, obj.author.email);
+    printf("Committer: %s <%s>\n", obj.committer.name, obj.committer.email);
     printf("\n    ");
     for (char *c = obj.message; *c != '\0'; c++) {
         if (*c == '\n') {

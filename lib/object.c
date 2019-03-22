@@ -123,7 +123,8 @@ int object_open(struct object *obj,
         }
     }
 
-    obj->fd = open(path, (create ? O_RDWR : O_RDONLY) | O_CREAT, default_mode);
+    obj->fd = open(path, (create ? O_RDWR | O_TRUNC : O_RDONLY) | O_CREAT,
+                   default_mode);
     if (obj->fd < 0) {
         ERROR("Unable to open %s: %s", path, strerror(errno));
         return -1;
@@ -243,38 +244,38 @@ uint8_t *object_serialize(struct object *obj,
     int ret;
     uint8_t header[MIN_OBJECT_HEADER_SZ] = { 0 };
     ssize_t header_sz = 0;
+    uint8_t *complete_buffer_in;
+    ssize_t complete_buffer_in_sz;
 
     setup_zlib_deflate(obj, ZLIB_COMPRESSION_LEVEL);
 
     header_sz = snprintf((char*)header, MIN_OBJECT_HEADER_SZ, "%s %ld",
                          object_type_string(type), buffer_in_sz) + 1;
 
+    complete_buffer_in_sz = header_sz + buffer_in_sz;
+    complete_buffer_in = malloc(complete_buffer_in_sz);
+
     /* This should be calculated better ..*/
-    ssize_t buffer_out_sz = (header_sz + buffer_in_sz) * 2;
+    ssize_t buffer_out_sz = (complete_buffer_in_sz + 8 + 4);
     if (buffer_in_sz < 0) {
         return NULL;
     }
 
-    buffer_out = calloc(buffer_out_sz, 1);
+    buffer_out = malloc(buffer_out_sz);
     if (!buffer_out) {
         ERROR("Failed to allocate memory for object compression");
         free(buffer_out);
         return NULL;
     }
 
-    /* Deflate header */
+    memcpy(complete_buffer_in, header, header_sz);
+    memcpy(complete_buffer_in + header_sz, buffer_in, buffer_in_sz);
+
     obj->strm_def.avail_out = buffer_out_sz;
     obj->strm_def.next_out = buffer_out;
 
-    obj->strm_def.avail_in = header_sz;
-    obj->strm_def.next_in = header;
-
-    ret = deflate(&obj->strm_def, Z_NO_FLUSH);
-    assert(ret != Z_STREAM_ERROR);
-
-    /* Deflate data */
-    obj->strm_def.avail_in = buffer_in_sz;
-    obj->strm_def.next_in = buffer_in;
+    obj->strm_def.avail_in = complete_buffer_in_sz;
+    obj->strm_def.next_in = complete_buffer_in;
 
     ret = deflate(&obj->strm_def, Z_FINISH);
     assert(ret != Z_STREAM_ERROR);
@@ -282,7 +283,7 @@ uint8_t *object_serialize(struct object *obj,
     *buffer_out_used = buffer_out_sz - obj->strm_def.avail_out;
 
     SHA1Init(&context);
-    SHA1Update(&context, buffer_out, *buffer_out_used);
+    SHA1Update(&context, complete_buffer_in, complete_buffer_in_sz);
     SHA1Final(digest, &context);
     SHA1DigestString(digest, digest_string);
 

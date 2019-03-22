@@ -68,6 +68,25 @@ char *resolve_ref(const char *git_dir, const char *ref) {
     }
 }
 
+int update_ref(const char *git_dir, const char *ref_name, const char *hash) {
+    char path[PATH_MAX];
+    int fd;
+
+    snprintf(path, PATH_MAX, "%s/refs/%s", git_dir, ref_name);
+    fd = open(path, O_WRONLY | O_TRUNC);
+    if (fd < 0) {
+        ERROR("Failed to open ref %s: %s", path, strerror(errno));
+        return -1;
+    }
+
+    if (write(fd, hash, 41) != 41) {
+        ERROR("Failed to write ref: %s", strerror(errno));
+        return -1;
+    }
+
+    return 0;
+}
+
 int num_entries_in_dir(const char *dir) {
     int entry_count = -2; // Don't count . and ..
     DIR * dirp;

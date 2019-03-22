@@ -21,3 +21,6 @@ int config_set(struct config *config,
 int config_write_to_file(struct config *config, int fd);
 
 void config_destroy(struct config *config);
+int config_from_file(struct config *config, const char *file);
+
+const char *config_read(struct config *config, const char *identifier);

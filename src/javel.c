@@ -1,4 +1,5 @@
 #include "cat-file.h"
+#include "commit.h"
 #include "checkout.h"
 #include "hash-file.h"
 #include "init.h"
@@ -103,21 +104,25 @@ int main(int argc, char **argv) {
         return jvl_hash_file(arguments.args[1]);
     } else if (IS_ARG(arguments.args[0], "show")) {
         int ret;
-        if (!arguments.args[1]) {
-            arguments.args[1] = get_head(".");
+        if (arguments.args[1]) {
+            ret = jvl_show(arguments.args[1]);
+        } else {
+            char *ref = get_head(".");
+            ret = jvl_show(ref);
+            free(ref);
         }
 
-        ret = jvl_show(arguments.args[1]);
-        free(arguments.args[1]);
         return ret;
     } else if (IS_ARG(arguments.args[0], "log")) {
         int ret;
         if (!arguments.args[1]) {
-            arguments.args[1] = get_head(".");
+            char *ref = get_head(".");
+            ret = jvl_log(ref);
+            free(ref);
+        } else {
+            ret = jvl_log(arguments.args[1]);
         }
 
-        ret = jvl_log(arguments.args[1]);
-        free(arguments.args[1]);
         return ret;
     } else if (IS_ARG(arguments.args[0], "ls-tree")) {
         if (!arguments.args[1]) {
@@ -138,6 +143,13 @@ int main(int argc, char **argv) {
         }
 
         return jvl_checkout(arguments.args[1], arguments.args[2]);
+    } else if (IS_ARG(arguments.args[0], "commit")) {
+        if (!arguments.args[1]) {
+            ERROR("Second argument must be a commit message (within quotes)");
+            return -1;
+        }
+
+        return jvl_commit(arguments.args[1]);
     } else {
         fprintf(stderr, "Unknown argument '%s'\n", arguments.args[0]);
     }
