@@ -8,6 +8,7 @@
 
 #include <dirent.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -20,13 +21,81 @@ static char *default_ignore[] = {
     ".git"
 };
 
+static char **custom_ignore = NULL;
+static size_t custom_ignore_len;
+
+static int read_custom_ignore(const char *git_dir) {
+    struct stat sb = { 0 };
+    char gitignore[PATH_MAX];
+    char *gitignore_buf;
+    ssize_t gitignore_buf_sz;
+    int fd;
+
+    snprintf(gitignore, PATH_MAX, "%s/../.gitignore", git_dir);
+    lstat(gitignore, &sb);
+
+    fd = open(gitignore, O_RDONLY);
+    if (fd < 0) {
+        DBG("Failed to open gitignore: %s", strerror(errno));
+        return -1;
+    }
+
+    gitignore_buf_sz = sb.st_size;
+
+    gitignore_buf = malloc(gitignore_buf_sz);
+    if (!gitignore_buf) {
+        ERROR("Failed to alloc buffer for gitignore: %s", strerror(errno));
+        return -1;
+    }
+
+    if (read(fd, gitignore_buf, gitignore_buf_sz) != gitignore_buf_sz) {
+        ERROR("Failed to read gitignore: %s", strerror(errno));
+        return -1;
+    }
+
+    int i;
+    char *str;
+    for(i = 1, str = gitignore_buf;;i++, str = NULL) {
+        char *line = strtok(str, "\n");
+        if (!line) {
+            break;
+        }
+
+        custom_ignore = realloc(custom_ignore, i * sizeof(*custom_ignore));
+        if (!custom_ignore) {
+            ERROR("Failed to allocate data structure for gitignore: %s",
+                  strerror(errno));
+            free (gitignore_buf);
+            return -1;
+        }
+
+        custom_ignore[i - 1] = strndup(line, PATH_MAX);
+    }
+
+    custom_ignore_len = i - 1;
+
+    free(gitignore_buf);
+
+    return 0;
+}
+
+static int match_expr(const char *expr, const char *fname) {
+    /* TODO: Impement matching algorithm */
+    return !strcmp(expr, fname);
+}
+
 static int ignore_filter(const struct dirent *dirent) {
-    const char *file_name = dirent->d_name;
     size_t num_entries = sizeof(default_ignore) / sizeof(*default_ignore);
 
     for (size_t i = 0; i < num_entries; i++) {
-        if (!strcmp(file_name, default_ignore[i]))
+        if (!strcmp(dirent->d_name, default_ignore[i]))
         {
+            return 0;
+        }
+    }
+
+    for (size_t i = 0; i < custom_ignore_len; i++) {
+        if (match_expr(custom_ignore[i], dirent->d_name)) {
             return 0;
         }
     }
@@ -135,6 +204,8 @@ int jvl_commit(const char *message) {
     if (read_config(&config, &author, &committer, git_dir)) {
         return -1;
     }
+
+    read_custom_ignore(git_dir);
 
     time(&current_time);
     time_info = localtime(&current_time);
