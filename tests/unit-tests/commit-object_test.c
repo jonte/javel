@@ -71,13 +71,15 @@ static int test_can_serialize(struct fixture *fx)
 
     serialized_commit = commit_object_serialize(&commit_obj, &serialized_sz);
     ASSERT(serialized_sz > 0);
-    object_serialize(&obj,
-                     OBJECT_TYPE_COMMIT,
-                     serialized_commit,
-                     serialized_sz,
-                     &serialized_sz,
-                     hash);
+    free(object_serialize(&obj,
+                          OBJECT_TYPE_COMMIT,
+                          serialized_commit,
+                          serialized_sz,
+                          &serialized_sz,
+                          hash));
     ASSERT(serialized_sz > 0);
+    commit_object_close(&commit_obj);
+    free(serialized_commit);
 
     return 0;
 }
