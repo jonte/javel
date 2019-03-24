@@ -352,6 +352,8 @@ char *object_write(struct object *obj,
     buffer_out = object_serialize(obj, type, buffer_in, buffer_in_sz,
                                   &buffer_out_sz, digest_string);
 
+    free(buffer_in);
+
     if (write_to_db) {
         char *git_dir = find_git_dir(".");
         object_write_to_file(obj, git_dir, buffer_out, buffer_out_sz,
