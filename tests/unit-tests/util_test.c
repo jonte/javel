@@ -64,6 +64,7 @@ static int test_resolve_indirect_ref(struct fixture *fx)
     ASSERT(resolved);
     ASSERT(!strncmp(resolved, "dummy-hash", 10));
     free(git_dir);
+    free(resolved);
     return 0;
 }
 
