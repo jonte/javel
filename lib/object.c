@@ -361,5 +361,7 @@ char *object_write(struct object *obj,
         free(git_dir);
     }
 
+    free(buffer_out);
+
     return strndup(digest_string, sizeof(digest_string));
 }
