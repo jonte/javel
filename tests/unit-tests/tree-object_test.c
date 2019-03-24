@@ -20,12 +20,13 @@ struct fixture {
 };
 
 static int default_setup(struct fixture *fx) {
-    (void)fx;
+    memset(&fx->tree_obj, 0, sizeof(fx->tree_obj));
+
     return 0;
 }
 
 static int default_teardown(struct fixture *fx) {
-    (void)fx;
+    tree_object_close(&fx->tree_obj);
     return 0;
 }
 
@@ -125,20 +126,19 @@ static int test_can_add(struct fixture *fx) {
                                  "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
                                  "test_entry_dir",
                                  OBJECT_TYPE_TAG) != 0);
+    tree_object_close(&fx->tree_obj);
 
     return 0;
 }
 
 static int test_can_write(struct fixture *fx) {
-    struct tree_object tree_obj = { 0 };
-
-    ASSERT(tree_object_add_entry(&tree_obj,
+    ASSERT(tree_object_add_entry(&fx->tree_obj,
                                  0644,
                                  "a559ebabec4b9bd15576851743692771640c12ea",
                                  "test_",
                                  OBJECT_TYPE_BLOB) == 0);
 
-    tree_object_write(&tree_obj, fx->git_dir);
+    tree_object_write(&fx->tree_obj, fx->git_dir);
 
     return 0;
 }
