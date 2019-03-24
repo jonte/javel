@@ -17,18 +17,19 @@
 static int walk(const char *path, struct tree_object *tree, const char *git_dir)
 {
     char *hash = NULL;
-    DIR * dirp;
-    struct dirent * entry;
+    struct dirent **entries;
+    int nents;
 
-    dirp = opendir(path);
-
-    if (!dirp) {
-        perror("opendir");
-        return -1;
+    nents = scandir(path, &entries, NULL, alphasort);
+    if (nents < 0) {
+        ERROR("scandir failed: %s\n", strerror(errno));
+        return 1;
     }
 
-    while ((entry = readdir(dirp)) != NULL) {
+    for (int i = 0; i < nents; i++) {
+        struct dirent *entry = entries[i];
         char newpath[PATH_MAX] = { 0 };
+
         if (!strncmp(entry->d_name, ".", 2)  ||
             !strncmp(entry->d_name, "..", 3) ||
             !strncmp(entry->d_name, ".git", 5))
@@ -62,10 +63,13 @@ static int walk(const char *path, struct tree_object *tree, const char *git_dir)
                 break;
             } default:
                 ERROR("Unsupported entry: %s", newpath);
+
         }
+        free(entries[i]);
     }
 
-    closedir(dirp);
+    free(entries);
+
     return 0;
 }
 
