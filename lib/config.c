@@ -37,10 +37,10 @@ int config_from_file(struct config *config, const char *file) {
 
     while ((r = read(fd, &c, 1)) == 1) {
         if (c == '\n') {
-            if (line[0] == '[') {
-                char *tmp_sec = NULL;
+            char *tmp_sec = NULL;
+            if ((tmp_sec = strstr(line, "["))) {
                 free (section);
-                tmp_sec = strtok(line, "[]");
+                tmp_sec = strtok(tmp_sec, "[]");
                 if (tmp_sec) {
                     section = strdup(tmp_sec);
                 }
