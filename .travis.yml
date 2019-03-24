@@ -10,10 +10,10 @@ addons:
     - python3-pip
     - python3-setuptools
     - ninja-build
+    - valgrind
 
 before_install:
     - sudo pip3 install meson
-
 
 script:
   - mv .git/objects/pack/*.pack .
@@ -22,4 +22,4 @@ script:
   - meson build
   - cd build
   - ninja
-  - meson test -v
+  - meson test --wrap "valgrind -q --leak-check=full --error-exitcode=1" -v
