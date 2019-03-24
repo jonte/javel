@@ -14,13 +14,33 @@
 #include <sys/stat.h>
 #include <time.h>
 
+static char *default_ignore[] = {
+    ".",
+    "..",
+    ".git"
+};
+
+static int ignore_filter(const struct dirent *dirent) {
+    const char *file_name = dirent->d_name;
+    size_t num_entries = sizeof(default_ignore) / sizeof(*default_ignore);
+
+    for (size_t i = 0; i < num_entries; i++) {
+        if (!strcmp(file_name, default_ignore[i]))
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 static int walk(const char *path, struct tree_object *tree, const char *git_dir)
 {
     char *hash = NULL;
     struct dirent **entries;
     int nents;
 
-    nents = scandir(path, &entries, NULL, alphasort);
+    nents = scandir(path, &entries, ignore_filter, alphasort);
     if (nents < 0) {
         ERROR("scandir failed: %s\n", strerror(errno));
         return 1;
@@ -29,13 +49,6 @@ static int walk(const char *path, struct tree_object *tree, const char *git_dir)
     for (int i = 0; i < nents; i++) {
         struct dirent *entry = entries[i];
         char newpath[PATH_MAX] = { 0 };
-
-        if (!strncmp(entry->d_name, ".", 2)  ||
-            !strncmp(entry->d_name, "..", 3) ||
-            !strncmp(entry->d_name, ".git", 5))
-        {
-            continue;
-        }
 
         snprintf(newpath, PATH_MAX, "%s/%s", path, entry->d_name);
 
