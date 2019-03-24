@@ -290,6 +290,7 @@ uint8_t *object_serialize(struct object *obj,
     deflateEnd(&obj->strm_def);
 
     strncpy(hash_out, digest_string, 41);
+    free(complete_buffer_in);
 
     return buffer_out;
 }
