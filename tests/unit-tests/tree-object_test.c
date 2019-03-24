@@ -98,6 +98,7 @@ static int test_can_serialize(struct fixture *fx) {
     ASSERT(buf_sz == sizeof(expected_data));
 
     ASSERT(!memcmp(expected_data, actual_data, sizeof(expected_data)));
+    free(actual_data);
 
     return 0;
 }
@@ -126,8 +127,6 @@ static int test_can_add(struct fixture *fx) {
                                  "9e872b38b7e8af16a6abdfc15bf181744c51e3c0",
                                  "test_entry_dir",
                                  OBJECT_TYPE_TAG) != 0);
-    tree_object_close(&fx->tree_obj);
-
     return 0;
 }
 
@@ -138,7 +137,7 @@ static int test_can_write(struct fixture *fx) {
                                  "test_",
                                  OBJECT_TYPE_BLOB) == 0);
 
-    tree_object_write(&fx->tree_obj, fx->git_dir);
+    free(tree_object_write(&fx->tree_obj, fx->git_dir));
 
     return 0;
 }
