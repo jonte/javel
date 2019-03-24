@@ -73,7 +73,7 @@ int update_ref(const char *git_dir, const char *ref_name, const char *hash) {
     int fd;
 
     snprintf(path, PATH_MAX, "%s/refs/%s", git_dir, ref_name);
-    fd = open(path, O_WRONLY | O_TRUNC);
+    fd = open(path, O_WRONLY | O_TRUNC | O_CREAT, 0644);
     if (fd < 0) {
         ERROR("Failed to open ref %s: %s", path, strerror(errno));
         return -1;
