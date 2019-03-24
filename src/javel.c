@@ -30,6 +30,8 @@ static char doc[] =
 "  - Show a list of objects referenced by the tree object HASH\n"
 "checkout HASH DIR\n"
 "  - Check out the commit HASH in the directory DIR\n"
+"commit MESSAGE\n"
+"  - Commit all changes, with the mesage MESSAGE\n"
 "\n"
 "Options:";
 
