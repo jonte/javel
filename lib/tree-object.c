@@ -131,6 +131,7 @@ char *tree_object_write(struct tree_object *obj, const char *git_dir) {
 
     free(uncomp_buf);
     free(comp_buf);
+    object_close(&obj_to_write);
 
     return strdup(hash);
 }
