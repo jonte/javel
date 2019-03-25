@@ -47,3 +47,14 @@ tree_object_test = executable('tree-object_test',
                               dependencies: zlib_dep)
 
 test('tree-object test', tree_object_test)
+
+index_test = executable('index_test',
+                        [
+                            '../../lib/index.c',
+                            'index_test.c',
+                            '../../common/util.c'
+                        ],
+                        include_directories: [inc, lib_include_dirs],
+                        dependencies: zlib_dep)
+
+test('index test', index_test)

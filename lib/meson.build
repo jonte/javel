@@ -6,6 +6,7 @@ lib_src = [
     '../common/util.c',
     'config.c',
     'hash-file.c',
+    'index.c',
     'init.c',
     'log.c',
     'ls-tree.c',

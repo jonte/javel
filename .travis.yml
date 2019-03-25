@@ -22,4 +22,4 @@ script:
   - meson build
   - cd build
   - ninja
-  - meson test --wrap "valgrind -q --leak-check=full --error-exitcode=1" -v
+  - meson test --wrap "valgrind -q --leak-check=full --error-exitcode=1" --print-errorlogs
