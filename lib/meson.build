@@ -13,6 +13,7 @@ lib_src = [
     'object.c',
     'sha1.c',
     'show.c',
+    'ls_files.c',
     'tree-object.c',
 ]
 

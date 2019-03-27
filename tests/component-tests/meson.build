@@ -10,3 +10,6 @@ test('hash-file component test', hash_file_test, env: env)
 
 commit_test = find_program('commit-test.py')
 test('commit component test', commit_test, env: env)
+
+ls_files_test = find_program('ls-files-test.py')
+test('ls-files component test', ls_files_test, env: env)
