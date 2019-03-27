@@ -9,11 +9,12 @@ lib_src = [
     'index.c',
     'init.c',
     'log.c',
+    'ls_files.c',
     'ls-tree.c',
     'object.c',
     'sha1.c',
     'show.c',
-    'ls_files.c',
+    'status.c',
     'tree-object.c',
 ]
 

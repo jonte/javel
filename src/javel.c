@@ -5,9 +5,10 @@
 #include "init.h"
 #include "logging.h"
 #include "log.h"
+#include "ls_files.h"
 #include "ls-tree.h"
 #include "show.h"
-#include "ls_files.h"
+#include "status.h"
 #include "util.h"
 
 #include <argp.h>
@@ -155,6 +156,8 @@ int main(int argc, char **argv) {
         return jvl_commit(arguments.args[1]);
     } else if (IS_ARG(arguments.args[0], "ls-files")) {
         return jvl_ls_files();
+    } else if (IS_ARG(arguments.args[0], "status")) {
+        return jvl_status();
     } else {
         fprintf(stderr, "Unknown argument '%s'\n", arguments.args[0]);
     }

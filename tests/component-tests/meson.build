@@ -13,3 +13,6 @@ test('commit component test', commit_test, env: env)
 
 ls_files_test = find_program('ls-files-test.py')
 test('ls-files component test', ls_files_test, env: env)
+
+status_test = find_program('status-test.py')
+test('status component test', status_test, env: env)
