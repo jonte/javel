@@ -2,17 +2,19 @@ env = environment()
 env.append('JVL', jvl.full_path())
 find_program('git', required: true)
 
+suite = 'component tests'
+
 init_test = find_program('init-test.py')
-test('init component test', init_test, env: env)
+test('init', init_test, env: env, suite: suite)
 
 hash_file_test = find_program('hash-file-test.py')
-test('hash-file component test', hash_file_test, env: env)
+test('hash-file', hash_file_test, env: env, suite: suite)
 
 commit_test = find_program('commit-test.py')
-test('commit component test', commit_test, env: env)
+test('commit', commit_test, env: env, suite: suite)
 
 ls_files_test = find_program('ls-files-test.py')
-test('ls-files component test', ls_files_test, env: env)
+test('ls-files', ls_files_test, env: env, suite: suite)
 
 status_test = find_program('status-test.py')
-test('status component test', status_test, env: env)
+test('status', status_test, env: env, suite: suite)

@@ -1,5 +1,7 @@
 lib_include_dirs = include_directories('../../lib/')
 
+suite = 'unit tests'
+
 util_test = executable('util_test',
                        [
                            'util_test.c',
@@ -7,7 +9,7 @@ util_test = executable('util_test',
                        ],
                        include_directories: [inc, lib_include_dirs])
 
-test('util test', util_test)
+test('util', util_test, suite: suite)
 
 object_test = executable('object_test',
                          [
@@ -19,7 +21,7 @@ object_test = executable('object_test',
                          include_directories: [inc, lib_include_dirs],
                          dependencies: zlib_dep)
 
-test('object test', object_test)
+test('object', object_test, suite: suite)
 
 commit_object_test = executable('commit-object_test',
                                 [
@@ -32,7 +34,7 @@ commit_object_test = executable('commit-object_test',
                                 include_directories: [inc, lib_include_dirs],
                                 dependencies: zlib_dep)
 
-test('commit-object test', commit_object_test)
+test('commit-object', commit_object_test, suite: suite)
 
 tree_object_test = executable('tree-object_test',
                               [
@@ -46,7 +48,7 @@ tree_object_test = executable('tree-object_test',
                               include_directories: [inc, lib_include_dirs],
                               dependencies: zlib_dep)
 
-test('tree-object test', tree_object_test)
+test('tree-object', tree_object_test, suite: suite)
 
 index_test = executable('index_test',
                         [
@@ -57,4 +59,4 @@ index_test = executable('index_test',
                         include_directories: [inc, lib_include_dirs],
                         dependencies: zlib_dep)
 
-test('index test', index_test)
+test('index', index_test, suite: suite)
