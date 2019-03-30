@@ -6,9 +6,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-static void usage(const char *cmd_name) {
-}
-
 int jvl_show(int argc, char **argv) {
     if (argc != 2) {
         ERROR("Command '%s' failed: The only allowed parameter is HASH",
