@@ -50,7 +50,7 @@ int jvl_status(int argc, char **argv) {
         if (memcmp(new_hash_raw, idx_file->hash, sizeof(new_hash_raw))) {
             printf(" - MODIFIED\n");
         } else {
-            printf("\n");
+            printf(" - ADDED\n");
         }
     }
 
