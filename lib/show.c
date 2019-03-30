@@ -7,12 +7,12 @@
 #include <stdlib.h>
 
 static void usage(const char *cmd_name) {
-    ERROR("Command '%s' failed: The only allowed parameter is HASH", cmd_name);
 }
 
 int jvl_show(int argc, char **argv) {
     if (argc != 2) {
-        usage(argv[0]);
+        ERROR("Command '%s' failed: The only allowed parameter is HASH",
+              argv[0]);
         return -1;
     }
 

@@ -32,7 +32,7 @@ struct command_entry {
 
 static struct command_entry commands[] = {
     {"show",      jvl_show, "COMMIT",  "Show the content of COMMIT"},
-    {"init",      NULL,     "",        "Initialize a new git directory"},
+    {"init",      jvl_init, "[DIR]",   "Initialize a new git directory in DIR"},
     {"cat-file",  NULL,     "FILE",    "Cat the contents of HASH to stdout"},
     {"hash-file", NULL,     "FILE",    "Hash FILE, and store the resulting object"},
     {"show",      NULL,     "COMMIT",  "Show the contents of COMMIT"},
