@@ -6,7 +6,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-int jvl_show(const char *hash) {
+static void usage(const char *cmd_name) {
+    ERROR("Command '%s' failed: The only allowed parameter is HASH", cmd_name);
+}
+
+int jvl_show(int argc, char **argv) {
+    if (argc != 2) {
+        usage(argv[0]);
+        return -1;
+    }
+
+    const char *hash = argv[1];
     struct commit_object obj = { 0 };
 
     char *git_dir = find_git_dir(".");

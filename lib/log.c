@@ -27,7 +27,7 @@ int jvl_log(const char *hash) {
             return -1;
         }
 
-        jvl_show(next_hash);
+//        jvl_show(next_hash);
         printf("\n");
 
         free(next_hash);

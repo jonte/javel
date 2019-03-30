@@ -1,3 +1,5 @@
 #pragma once
+#include <argp.h>
 
-int jvl_show(const char *hash);
+
+int jvl_show(int argc, char **argv);
