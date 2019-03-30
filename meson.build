@@ -3,7 +3,8 @@ project('Jävel', 'c',
         license: 'MIT',
         default_options: [
             'c_std=gnu11'
-        ]
+        ],
+        meson_version: '>= 0.35.0'
 )
 
 inc = include_directories(['include', 'common'])
