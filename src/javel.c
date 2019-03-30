@@ -30,25 +30,43 @@ struct command_entry {
     char *help_message;
 };
 
+#ifdef ENGLISH
 static struct command_entry commands[] = {
     {"show",      jvl_show, "COMMIT",  "Show the content of COMMIT"},
     {"init",      jvl_init, "[DIR]",   "Initialize a new git directory in DIR"},
     {"cat-file",  NULL,     "FILE",    "Cat the contents of HASH to stdout"},
     {"hash-file", NULL,     "FILE",    "Hash FILE, and store the resulting object"},
-    {"show",      NULL,     "COMMIT",  "Show the contents of COMMIT"},
     {"log",       jvl_log,  "[HASH]",  "Show the log ending with HASH (or HEAD per default)"},
     {"ls-tree",   NULL,     "HASH",    "Show objects referenced by the tree object HASH"},
     {"checkout",  NULL,     "HASH",    "Check out the commit HASH in the directory DIR"},
-    {"commit",    NULL,     "MESSAGE", "Commit all changes, with the mesage MESSAGE"},
+    {"commit",    NULL,     "MESSAGE", "Commit all changes, with the MESSAGE"},
 };
-
-
 
 static char banner[] = "Jävel - A Git implementation";
 static char doc[sizeof(commands) +
                 sizeof(banner) +
                 1024 /* Room for whitespace */] = { 0 };
 static char args_doc[] = "COMMAND";
+
+#else
+static struct command_entry commands[] = {
+    {"visa",         jvl_show, "FÖRBINDELSE", "Visa innehållet i FÖRBINDELSE"},
+    {"init",         jvl_init, "[KAT]",       "Initialisera KAT med en ny .git-katalog"},
+    {"skriv-ut-fil", NULL,     "FIL",         "Skriv ut innehållet av FÖRBILDELSE till stdout"},
+    {"hacka-fil",    NULL,     "FIL",         "Hacka ner och lagra FIL som ett gitobjekt"},
+    {"logg",         jvl_log,  "[HACK]",      "Visa loggen som slutar med HACK, annars HEAD"},
+    {"lista-träd",   NULL,     "HACK",        "Visa alla objekt som nämns i trädet HACK"},
+    {"checka-ut",    NULL,     "HACK KAT",    "Checka ut trädet TRÄD i katalogen KAT"},
+    {"förbind",      NULL,     "MEDDELANDE",  "Förbind alla ändringar med MEDDELANDE"},
+};
+
+static char banner[] = "Jävel - En Gitimplementation";
+static char doc[sizeof(commands) +
+                sizeof(banner) +
+                1024 /* Room for whitespace */] = { 0 };
+static char args_doc[] = "KOMMANDO";
+
+#endif
 
 static error_t
 parse_opt (int key, char *arg, struct argp_state *state)
@@ -95,7 +113,7 @@ void build_doc_string() {
     for (size_t i = 0; i < sizeof(commands) / sizeof(*commands); i++) {
         const struct command_entry *cmd = &commands[i];
         off += snprintf(doc + off, sizeof(doc) - off - 1,
-                        "%8s%-10s%-8s%s\n",
+                        "%2s%-14s%-13s%s\n",
                         "", cmd->fname, cmd->help_args, cmd->help_message);
     }
 }

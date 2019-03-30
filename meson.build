@@ -7,6 +7,10 @@ project('Jävel', 'c',
         meson_version: '>= 0.35.0'
 )
 
+if (get_option('english'))
+    add_project_arguments('-DENGLISH', language : 'c')
+endif
+
 inc = include_directories(['include', 'common'])
 
 zlib_dep = dependency('zlib', version : '>=1.2.8')
