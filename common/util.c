@@ -131,3 +131,11 @@ char *find_git_dir(const char *dir) {
 
     return find_git_dir(parent_path);
 }
+
+char *get_head(const char *dir) {
+    char *git_dir = find_git_dir(dir);
+    char *ref = resolve_ref(git_dir, "HEAD");
+    free(git_dir);
+
+    return ref;
+}

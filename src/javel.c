@@ -36,7 +36,7 @@ static struct command_entry commands[] = {
     {"cat-file",  NULL,     "FILE",    "Cat the contents of HASH to stdout"},
     {"hash-file", NULL,     "FILE",    "Hash FILE, and store the resulting object"},
     {"show",      NULL,     "COMMIT",  "Show the contents of COMMIT"},
-    {"log",       NULL,     "[HASH]",  "Show the log ending with HASH (or HEAD per default)"},
+    {"log",       jvl_log,  "[HASH]",  "Show the log ending with HASH (or HEAD per default)"},
     {"ls-tree",   NULL,     "HASH",    "Show objects referenced by the tree object HASH"},
     {"checkout",  NULL,     "HASH",    "Check out the commit HASH in the directory DIR"},
     {"commit",    NULL,     "MESSAGE", "Commit all changes, with the mesage MESSAGE"},

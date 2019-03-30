@@ -8,11 +8,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-int jvl_log(const char *hash) {
+int jvl_log(int argc, char **argv) {
     struct commit_object obj = { 0 };
-    char *next_hash = strdup(hash);
-
+    char *next_hash = NULL;
     char *git_dir = find_git_dir(".");
+
+    switch (argc) {
+        case 1:
+            next_hash = get_head(git_dir);
+            break;
+        case 2:
+            next_hash = strdup(argv[1]);
+            break;
+        default:
+            ERROR("Command '%s' failed: The only allowed option is HASH",
+                  argv[0]);
+            return -1;
+    }
+
     if (!git_dir) {
         ERROR("Not a git repository");
         free(next_hash);
@@ -27,7 +40,8 @@ int jvl_log(const char *hash) {
             return -1;
         }
 
-//        jvl_show(next_hash);
+        char *show_cmd[] = {"show", next_hash};
+        jvl_show(sizeof(show_cmd) / sizeof(*show_cmd), show_cmd);
         printf("\n");
 
         free(next_hash);
