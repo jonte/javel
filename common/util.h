@@ -7,3 +7,4 @@ char *find_git_dir(const char *dir);
 int file_size(const char *file);
 char *resolve_ref(const char *git_dir, const char *ref);
 int update_ref(const char *git_dir, const char *ref_name, const char *hash);
+char *get_head(const char *dir);

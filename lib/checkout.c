@@ -97,7 +97,15 @@ static int iterate_objects(struct tree_object *tree_obj,
     return 0;
 }
 
-int jvl_checkout(const char *hash, const char *dir) {
+int jvl_checkout(int argc, char **argv) {
+    if (argc != 3) {
+        ERROR("Command '%s' failed: The only allowed parameters are HASH and DIR",
+              argv[0]);
+        return -1;
+    }
+
+    const char *hash = argv[1];
+    const char *dir = argv[2];
     struct commit_object commit_obj = { 0 };
     struct tree_object tree_obj = { 0 };
 

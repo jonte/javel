@@ -1,10 +1,3 @@
 #pragma once
 
-/**
- * Initialize a directory with a new .git directory
- *
- * dir: Directory to initialize
- *
- * returns: 0 on success, -1 otherwise
- */
-int jvl_init(char *dir);
+int jvl_init(int argc, char **argv);

@@ -189,7 +189,14 @@ static int read_config(struct config *config, struct identity *author,
     return 0;
 }
 
-int jvl_commit(const char *message) {
+int jvl_commit(int argc, char **argv) {
+    if (argc != 2) {
+        ERROR("Command '%s' failed: The only allowed parameter is MESSAGE",
+              argv[0]);
+        return -1;
+    }
+
+    const char *message = argv[1];
     char root[PATH_MAX] = { 0 };
     struct commit_object commit_obj = { 0 };
     struct tree_object tree_obj = { 0 };

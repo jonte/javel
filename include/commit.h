@@ -1,3 +1,3 @@
 #include "show.h"
 
-int jvl_commit(const char *message);
+int jvl_commit(int argc, char **argv);

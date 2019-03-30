@@ -1,3 +1,3 @@
 #pragma once
 
-int jvl_checkout(const char *hash, const char *dir);
+int jvl_checkout(int argc, char **argv);

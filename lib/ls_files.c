@@ -1,10 +1,17 @@
 #include "index.h"
+#include "logging.h"
 #include "util.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 
-int jvl_ls_files() {
+int jvl_ls_files(int argc, char **argv) {
+    if (argc != 1) {
+        ERROR("Command '%s' failed: No arguments allowed",
+              argv[0]);
+        return -1;
+    }
+
     const struct index_file *idx_file = NULL;
     struct index idx = { 0 };
 

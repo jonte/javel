@@ -6,7 +6,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-int jvl_hash_file(const char *file) {
+int jvl_hash_file(int argc, char **argv) {
+    if (argc != 2) {
+        ERROR("Command '%s' failed: The only allowed parameter is FILE",
+              argv[0]);
+        return -1;
+    }
+
+    const char *file = argv[1];
     struct object obj = { 0 };
     char *hash = 0;
 

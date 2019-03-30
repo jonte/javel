@@ -1,4 +1,5 @@
 #include "index.h"
+#include "logging.h"
 #include "object.h"
 #include "sha1.h"
 #include "util.h"
@@ -7,7 +8,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-int jvl_status() {
+int jvl_status(int argc, char **argv) {
+    if (argc != 1) {
+        ERROR("Command '%s' failed: No arguments allowed",
+              argv[0]);
+        return -1;
+    }
     const struct index_file *idx_file = NULL;
     struct index idx = { 0 };
 

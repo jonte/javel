@@ -5,7 +5,14 @@
 
 #include <stdint.h>
 
-int jvl_cat_file(const char *hash) {
+int jvl_cat_file(int argc, char **argv) {
+    if (argc != 2) {
+        ERROR("Command '%s' failed: The only allowed parameter is HASH",
+              argv[0]);
+        return -1;
+    }
+
+    const char *hash = argv[1];
     struct object obj;
     uint8_t buf[1024];
     ssize_t read_sz = 0;

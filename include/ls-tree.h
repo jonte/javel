@@ -1,3 +1,3 @@
 #pragma once
 
-int jvl_ls_tree(const char *hash);
+int jvl_ls_tree(int argc, char **argv);

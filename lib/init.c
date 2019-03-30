@@ -78,7 +78,22 @@ static int write_default_config() {
     return 0;
 }
 
-int jvl_init(char *dir) {
+int jvl_init(int argc, char **argv) {
+    const char *dir = NULL;;
+
+    switch (argc) {
+        case 1:
+            dir = ".";
+            break;
+        case 2:
+            dir = argv[1];
+            break;
+        default:
+            ERROR("Command '%s' failed: The only allowed option is DIR",
+                  argv[0]);
+            return -1;
+    }
+
     if (!is_dir(dir)) {
         if (mkdir(dir, default_mode)) {
             ERROR("Failed to create directory %s: %s", dir, strerror(errno));

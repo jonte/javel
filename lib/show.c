@@ -5,11 +5,26 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
-int jvl_show(const char *hash) {
+int jvl_show(int argc, char **argv) {
     struct commit_object obj = { 0 };
-
     char *git_dir = find_git_dir(".");
+    const char *hash = argv[1];
+
+    switch (argc) {
+        case 1:
+            hash = get_head(git_dir);
+            break;
+        case 2:
+            hash = strdup(argv[1]);
+            break;
+        default:
+            ERROR("Command '%s' failed: The only allowed option is HASH",
+                  argv[0]);
+            return -1;
+    }
+
     if (!git_dir) {
         ERROR("Not a git repository");
         return -1;

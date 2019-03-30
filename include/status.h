@@ -1,1 +1,3 @@
-int jvl_status();
+#pragma once
+
+int jvl_status(int argc, char **argv);

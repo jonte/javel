@@ -7,7 +7,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-int jvl_ls_tree(const char *hash) {
+int jvl_ls_tree(int argc, char **argv) {
+    if (argc != 2) {
+        ERROR("Command '%s' failed: The only allowed parameter is HASH",
+              argv[0]);
+        return -1;
+    }
+
+    const char *hash = argv[1];
     struct tree_object obj = { 0 };
 
     char *git_dir = find_git_dir(".");
