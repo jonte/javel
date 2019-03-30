@@ -36,7 +36,7 @@ int file_size(const char *file) {
     return sb.st_size;
 }
 
-char *resolve_ref(const char *git_dir, const char *ref) {
+int resolve_ref(const char *git_dir, const char *ref, char *resolved_ref_out) {
     char path[PATH_MAX];
     char buf[1024] = { 0 };
     int fd;
@@ -46,12 +46,12 @@ char *resolve_ref(const char *git_dir, const char *ref) {
     fd = open(path, O_RDONLY);
     if (fd < 0) {
         ERROR("Failed to open ref %s: %s", path, strerror(errno));
-        return NULL;
+        return -1;
     }
 
     if ((ref_sz = read(fd, buf, sizeof(buf))) == sizeof(buf)) {
         ERROR("Ref too long");
-        return NULL;
+        return -1;
     }
 
     if (!strncmp(buf, "ref: ", 5)) {
@@ -59,12 +59,13 @@ char *resolve_ref(const char *git_dir, const char *ref) {
             buf[ref_sz-1] = '\0';
         }
 
-        return resolve_ref(git_dir, buf + 5);
+        return resolve_ref(git_dir, buf + 5, resolved_ref_out);
     } else {
         if (buf[40] == '\n') {
             buf[40] = '\0';
         }
-        return strndup(buf, sizeof(buf));
+        strncpy(resolved_ref_out, buf, PATH_MAX);
+        return 0;
     }
 }
 
@@ -109,33 +110,55 @@ int num_entries_in_dir(const char *dir) {
     return entry_count;
 }
 
-char *find_git_dir(const char *dir) {
+int find_git_dir(const char *dir, char *git_dir_out) {
     char check_path[PATH_MAX];
     char parent_path[PATH_MAX];
     snprintf(check_path, PATH_MAX, "%s/.git", dir);
 
     if (is_dir(check_path)) {
-        return strndup(check_path, PATH_MAX);
+        strncpy(git_dir_out, check_path, PATH_MAX);
+        return 0;
     }
 
     snprintf(check_path, PATH_MAX, "%s/..", dir);
     if (!realpath(check_path, parent_path)) {
         ERROR ("Failed to recurse to parent directory");
-        return NULL;
+        return -1;
     }
 
     if (!strncmp(dir, parent_path, PATH_MAX)) {
         /* There is no .git directory before reaching / */
-        return NULL;
+        return -1;
     }
 
-    return find_git_dir(parent_path);
+    return find_git_dir(parent_path, git_dir_out);
 }
 
-char *get_head(const char *dir) {
-    char *git_dir = find_git_dir(dir);
-    char *ref = resolve_ref(git_dir, "HEAD");
-    free(git_dir);
+int find_root(const char *dir, char *root_dir_out) {
+    if (find_git_dir(dir, root_dir_out)) {
+        return -1;
+    }
 
-    return ref;
+    int root_dir_len = strlen(root_dir_out);
+    root_dir_out[root_dir_len-4] = '\0';
+
+    return 0;
+}
+
+int find_in_root(const char *dir, const char *file, char *path_out) {
+    if (find_root(dir, path_out)) {
+        return -1;
+    }
+
+    strncat(path_out, file, PATH_MAX);
+    return 0;
+}
+
+int get_head(const char *dir, char *ref_out) {
+    char git_dir[PATH_MAX];
+    if (find_git_dir(dir, git_dir)) {
+        return -1;
+    }
+
+    return resolve_ref(git_dir, "HEAD", ref_out);
 }

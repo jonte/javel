@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 struct fixture {
-    char *git_dir;
+    char git_dir[PATH_MAX];
     char *object_hash;
     char write_file[PATH_MAX];
 };
@@ -111,28 +111,30 @@ int main(int argc, char **argv) {
      * exists - don't force push ;) */
     {
         struct fixture fx = {
-            find_git_dir("."),
+            "",
             "551c0596f1bb03f6a707fe2959a6ddc785963992",
             ""
         };
+
+        find_git_dir(".", fx.git_dir);
 
         TEST_DEFAULT(test_can_open_close, &fx);
         TEST_DEFAULT(test_can_read, &fx);
         TEST_DEFAULT(test_can_read_bytewise, &fx);
         TEST_DEFAULT(test_can_read_big, &fx);
-        free(fx.git_dir);
     }
 
 
     {
         struct fixture fx = {
-            find_git_dir("."),
+            "",
             "",
             ""
         };
 
+        find_git_dir(".", fx.git_dir);
+
         TEST_DEFAULT(test_can_write, &fx);
-        free(fx.git_dir);
     }
 
 }

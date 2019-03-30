@@ -1,6 +1,7 @@
 #define _DEFAULT_SOURCE
 #include "commit.h"
 #include "commit-object.h"
+#include "common.h"
 #include "config.h"
 #include "logging.h"
 #include "show.h"
@@ -31,7 +32,10 @@ static int read_custom_ignore(const char *git_dir) {
     ssize_t gitignore_buf_sz;
     int fd;
 
-    snprintf(gitignore, PATH_MAX, "%s/../.gitignore", git_dir);
+    if (find_in_root(git_dir, ".gitignore", gitignore)) {
+        return -1;
+    }
+
     lstat(gitignore, &sb);
 
     fd = open(gitignore, O_RDONLY);
@@ -200,13 +204,17 @@ int jvl_commit(int argc, char **argv) {
     char root[PATH_MAX] = { 0 };
     struct commit_object commit_obj = { 0 };
     struct tree_object tree_obj = { 0 };
-    char *git_dir = find_git_dir(".");
+    char git_dir[PATH_MAX];
     char *hash = NULL;
     struct identity author = { 0 }, committer = { 0 };
     struct config config = { 0 };
-    char *ref = NULL;
+    char ref[REF_MAX];
     time_t current_time;
     struct tm *time_info;
+
+    if (find_git_dir(".", git_dir)) {
+        return -1;
+    }
 
     if (read_config(&config, &author, &committer, git_dir)) {
         return -1;
@@ -226,17 +234,11 @@ int jvl_commit(int argc, char **argv) {
 
     config_destroy(&config);
 
-    if (!git_dir) {
-        ERROR("Not a git repository");
-        return -1;
+    if (resolve_ref(git_dir, "HEAD", ref)) {
+        strcpy(ref, "");
     }
 
-    ref = resolve_ref(git_dir, "HEAD");
-    if (!ref) {
-        ref = "";
-    }
-
-    snprintf(root, PATH_MAX, "%s/../", git_dir);
+    find_root(git_dir, root);
 
     walk(root, &tree_obj, git_dir);
     hash = tree_object_write(&tree_obj, git_dir);
@@ -254,7 +256,6 @@ int jvl_commit(int argc, char **argv) {
     /* TODO: Support branches */
     update_ref(git_dir, "heads/master", hash);
 
-    free(git_dir);
     free(author.email);
     free(author.name);
     free(committer.email);

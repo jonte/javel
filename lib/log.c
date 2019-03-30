@@ -1,4 +1,5 @@
 #include "commit-object.h"
+#include "common.h"
 #include "logging.h"
 #include "log.h"
 #include "show.h"
@@ -10,15 +11,23 @@
 
 int jvl_log(int argc, char **argv) {
     struct commit_object obj = { 0 };
-    char *next_hash = NULL;
-    char *git_dir = find_git_dir(".");
+    char next_hash[REF_MAX];
+    char git_dir[PATH_MAX];
+
+    if (find_git_dir(".", git_dir)) {
+        ERROR("Not a git repository");
+        return -1;
+    }
 
     switch (argc) {
         case 1:
-            next_hash = get_head(git_dir);
+            if (get_head(git_dir, next_hash)) {
+                ERROR("HEAD does not exist");
+                return -1;
+            }
             break;
         case 2:
-            next_hash = strdup(argv[1]);
+            strncpy(next_hash, argv[1], sizeof(next_hash));
             break;
         default:
             ERROR("Command '%s' failed: The only allowed option is HASH",
@@ -26,17 +35,9 @@ int jvl_log(int argc, char **argv) {
             return -1;
     }
 
-    if (!git_dir) {
-        ERROR("Not a git repository");
-        free(next_hash);
-        return -1;
-    }
-
-    while (next_hash) {
+    while (1) {
         memset(&obj, 0, sizeof(obj));
         if (commit_object_open(&obj, git_dir, next_hash)) {
-            free(git_dir);
-            free(next_hash);
             return -1;
         }
 
@@ -44,15 +45,13 @@ int jvl_log(int argc, char **argv) {
         jvl_show(sizeof(show_cmd) / sizeof(*show_cmd), show_cmd);
         printf("\n");
 
-        free(next_hash);
-        next_hash = NULL;
         if (obj.parent[0]) {
-            next_hash = strdup(obj.parent);
+            strncpy(next_hash, obj.parent, REF_MAX);
+        } else {
+            break;
         }
         commit_object_close(&obj);
     }
-
-    free(git_dir);
 
     return 0;
 }

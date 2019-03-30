@@ -1,6 +1,7 @@
 #include "commit-object.h"
-#include "show.h"
+#include "common.h"
 #include "logging.h"
+#include "show.h"
 #include "util.h"
 
 #include <stdint.h>
@@ -9,25 +10,28 @@
 
 int jvl_show(int argc, char **argv) {
     struct commit_object obj = { 0 };
-    char *git_dir = find_git_dir(".");
-    const char *hash = argv[1];
+    char git_dir[PATH_MAX];
+    char hash[REF_MAX];
+
+    if (find_git_dir(".", git_dir)) {
+        ERROR("Not a git repository");
+        return -1;
+    }
 
     switch (argc) {
         case 1:
-            hash = get_head(git_dir);
+            if (get_head(git_dir, hash)) {
+                ERROR("Failed to resolve HEAD");
+                return -1;
+            }
             break;
         case 2:
-            hash = strdup(argv[1]);
+            strncpy(hash, argv[1], sizeof(hash));
             break;
         default:
             ERROR("Command '%s' failed: The only allowed option is HASH",
                   argv[0]);
             return -1;
-    }
-
-    if (!git_dir) {
-        ERROR("Not a git repository");
-        return -1;
     }
 
     if (commit_object_open(&obj, git_dir, hash)) {
@@ -53,8 +57,6 @@ int jvl_show(int argc, char **argv) {
     }
 
     commit_object_close(&obj);
-
-    free(git_dir);
 
     return 0;
 }

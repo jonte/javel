@@ -36,35 +36,32 @@ static int test_finds_existing_git_path(struct fixture *fx)
 {
     char path[PATH_MAX];
     char expected_path[PATH_MAX];
-    char *result_path = NULL;
+    char result_path[PATH_MAX];
     snprintf(path, PATH_MAX, "%s/1/2/3/4", fx->test_dir);
     snprintf(expected_path, PATH_MAX, "%s/.git", fx->test_dir);
 
-    result_path = find_git_dir(path);
+    find_git_dir(path, result_path);
     ASSERT(strcmp(result_path, expected_path) == 0);
-    free(result_path);
     return 0;
 }
 
 static int test_fails_finding_nonexisting_git_path(struct fixture *fx)
 {
     char path[PATH_MAX];
-    char *result_path = NULL;
+    char result_path[PATH_MAX];
     snprintf(path, PATH_MAX, "%s/..", fx->test_dir);
 
-    result_path = find_git_dir(path);
-    ASSERT(result_path == NULL);
+    ASSERT(find_git_dir(path, result_path));
     return 0;
 }
 
 static int test_resolve_indirect_ref(struct fixture *fx)
 {
-    char *git_dir = find_git_dir(fx->test_dir);
-    char *resolved = resolve_ref(git_dir, "HEAD");
-    ASSERT(resolved);
+    char git_dir[PATH_MAX];
+    find_git_dir(fx->test_dir, git_dir);
+    char resolved[PATH_MAX];
+    ASSERT(!resolve_ref(git_dir, "HEAD", resolved));
     ASSERT(!strncmp(resolved, "dummy-hash", 10));
-    free(git_dir);
-    free(resolved);
     return 0;
 }
 

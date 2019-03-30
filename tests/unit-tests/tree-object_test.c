@@ -14,7 +14,7 @@
 #include <unistd.h>
 
 struct fixture {
-    char *git_dir;
+    char git_dir[PATH_MAX];
     char *object_hash;
     struct tree_object tree_obj;
 };
@@ -150,16 +150,14 @@ int main(int argc, char **argv) {
      * directory of the Jävel source tree.. And that the referenced commit
      * exists - don't force push ;) */
 
-    struct fixture fx = { 0 };
-    fx.git_dir = find_git_dir(".");
+    struct fixture fx = {{ 0 }};
+    find_git_dir(".", fx.git_dir);
     fx.object_hash = "27ab33d6995bec35fef5eb06fb353e5b598a3978";
 
     TEST_DEFAULT(test_can_open_close, &fx);
     TEST_DEFAULT(test_can_serialize, &fx);
     TEST_DEFAULT(test_can_add, &fx);
     TEST_DEFAULT(test_can_write, &fx);
-    free(fx.git_dir);
-
 
     return 0;
 }

@@ -98,18 +98,22 @@ static int iterate_objects(struct tree_object *tree_obj,
 }
 
 int jvl_checkout(int argc, char **argv) {
+    const char *hash = argv[1];
+    const char *dir = argv[2];
+    struct commit_object commit_obj = { 0 };
+    struct tree_object tree_obj = { 0 };
+    char git_dir[PATH_MAX];
+
     if (argc != 3) {
         ERROR("Command '%s' failed: The only allowed parameters are HASH and DIR",
               argv[0]);
         return -1;
     }
 
-    const char *hash = argv[1];
-    const char *dir = argv[2];
-    struct commit_object commit_obj = { 0 };
-    struct tree_object tree_obj = { 0 };
-
-    char *git_dir = find_git_dir(".");
+    if (find_git_dir(".", git_dir)) {
+        ERROR("Not a git directory");
+        return -1;
+    }
 
     if (commit_object_open(&commit_obj, git_dir, hash)) {
         return -1;
@@ -127,7 +131,6 @@ int jvl_checkout(int argc, char **argv) {
 
     tree_object_close(&tree_obj);
     commit_object_close(&commit_obj);
-    free(git_dir);
 
     return 0;
 }

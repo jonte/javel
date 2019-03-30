@@ -355,10 +355,13 @@ char *object_write(struct object *obj,
     free(buffer_in);
 
     if (write_to_db) {
-        char *git_dir = find_git_dir(".");
+        char git_dir[PATH_MAX];
+        if (find_git_dir(".", git_dir)) {
+            ERROR("Not a git directory");
+        }
+
         object_write_to_file(obj, git_dir, buffer_out, buffer_out_sz,
                              digest_string);
-        free(git_dir);
     }
 
     free(buffer_out);

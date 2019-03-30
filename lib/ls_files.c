@@ -6,16 +6,19 @@
 #include <stdlib.h>
 
 int jvl_ls_files(int argc, char **argv) {
+    const struct index_file *idx_file = NULL;
+    struct index idx = { 0 };
+    char git_dir[PATH_MAX];
+    if (find_git_dir(".", git_dir)) {
+        ERROR("Not a git directory");
+        return -1;
+    }
+
     if (argc != 1) {
         ERROR("Command '%s' failed: No arguments allowed",
               argv[0]);
         return -1;
     }
-
-    const struct index_file *idx_file = NULL;
-    struct index idx = { 0 };
-
-    char *git_dir = find_git_dir(".");
 
     if (index_open(&idx, git_dir)) {
         return -1;
@@ -26,7 +29,6 @@ int jvl_ls_files(int argc, char **argv) {
     }
 
     index_close(&idx);
-    free(git_dir);
 
     return 0;
 }

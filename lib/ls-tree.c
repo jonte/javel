@@ -17,7 +17,10 @@ int jvl_ls_tree(int argc, char **argv) {
     const char *hash = argv[1];
     struct tree_object obj = { 0 };
 
-    char *git_dir = find_git_dir(".");
+    char git_dir[PATH_MAX];
+    if (find_git_dir(".", git_dir)) {
+        ERROR("Not a git directory");
+    }
 
     if (tree_object_open(&obj, git_dir, hash)) {
         return -1;
@@ -29,7 +32,6 @@ int jvl_ls_tree(int argc, char **argv) {
 
         if (object_open(&inner, git_dir, leaf->hash, 0)) {
             tree_object_close(&obj);
-            free(git_dir);
             ERROR("Referenced object %s can't be opened", leaf->hash);
             return -1;
         }
@@ -42,7 +44,6 @@ int jvl_ls_tree(int argc, char **argv) {
     }
 
     tree_object_close(&obj);
-    free(git_dir);
 
     return 0;
 }
